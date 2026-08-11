@@ -1,30 +1,49 @@
-// This is a basic Flutter widget test.
+// Unit tests for the Team Workspace networking foundation.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+// (Widget/integration tests are pending — see CLAUDE.md → Testing.)
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wallet/main.dart';
+import 'package:wallet/core/enums/domain_enums.dart';
+import 'package:wallet/core/networking/pagination.dart';
+import 'package:wallet/pages/projects/model/project_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('PagedResult', () {
+    test('parses backend paged envelope', () {
+      final result = PagedResult<ProjectModel>.fromJson(
+        {
+          'items': [
+            {'id': 'p1', 'workspaceId': 'w1', 'name': 'Alpha', 'status': 'Active', 'priority': 'High'},
+          ],
+          'page': 1,
+          'pageSize': 20,
+          'totalCount': 1,
+          'totalPages': 1,
+        },
+        ProjectModel.fromJson,
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(result.items.length, 1);
+      expect(result.items.first.name, 'Alpha');
+      expect(result.items.first.status, ProjectStatus.active);
+      expect(result.items.first.priority, ProjectPriority.high);
+      expect(result.hasNextPage, isFalse);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('PageParams clamps page size to the backend maximum', () {
+      const params = PageParams(page: 2, pageSize: 500, search: 'x');
+      final query = params.toQuery();
+      expect(query['pageSize'], PageParams.maxPageSize);
+      expect(query['page'], 2);
+      expect(query['search'], 'x');
+    });
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  group('Domain enum parsing', () {
+    test('maps API strings to enums with safe fallback', () {
+      expect(taskStatusFromApi('InProgress'), TaskItemStatus.inProgress);
+      expect(taskStatusFromApi('Nonexistent'), TaskItemStatus.todo);
+      expect(projectStatusFromApi('OnHold'), ProjectStatus.onHold);
+    });
   });
 }

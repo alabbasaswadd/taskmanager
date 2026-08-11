@@ -9,3 +9,5 @@ class ApiResult<T> with _$ApiResult<T> {
   const factory ApiResult.success(T data) = Success<T>;
   const factory ApiResult.failure(ErrorModel error) = Failure<T>;
 }
+// `.when(success:, failure:)` is provided by the generated `ApiResultPatterns`
+// extension in api_result.freezed.dart — import this file to use it.

@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 typedef AppColor = AppColors;
 
 class AppColors {
-  // 🌸 Brand (Productivity Pink)
-  static const Color kPrimaryColor = Color(0xFFE91E8C);
-  static const Color kSecondColor = Color(0xFFF06292);
-  static const Color kThirdColor = Color(0xFFFCE4EC);
+  // 💼 Brand (Calm Modern Indigo / Blue — technology-focused startup)
+  static const Color kPrimaryColor = Color(0xFF4F46E5); // deep indigo
+  static const Color kSecondColor = Color(0xFF14B8A6); // muted teal
+  static const Color kThirdColor = Color(0xFFEEF2FF); // very light indigo tint
 
   // Dark Mode Brand
-  static const Color kPrimaryColorDarkMode = Color(0xFFC2185B);
-  static const Color kSecondColorDarkMode = Color(0xFF880E4F);
-  static const Color kThirdColorDarkMode = Color(0xFF4A0029);
+  static const Color kPrimaryColorDarkMode = Color(0xFF6366F1);
+  static const Color kSecondColorDarkMode = Color(0xFF2DD4BF);
+  static const Color kThirdColorDarkMode = Color(0xFF1E1B4B);
 
   // ─── Task Status Colors ──────────────────────────────────────────────────
   static const Color kStatusNotStarted = Color(0xFF94A3B8);

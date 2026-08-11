@@ -1,29 +1,78 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'user_model.g.dart';
-
-@JsonSerializable()
+/// Mirrors the backend `UserResponse` (`GET /api/users/me`). Manual JSON.
 class UserModel {
-  final String? id;
-  final String? fullName;
+  final String id;
+  final String? firstName;
+  final String? lastName;
+  final String? displayName;
   final String? email;
-  final String? phoneNumber;
-  final int? role;
+  final String? profileImageUrl;
   final bool? isActive;
-  final String? createdOn;
+  final DateTime? lastLoginAt;
+  final DateTime? createdAt;
 
   UserModel({
-    this.id,
-    this.fullName,
+    required this.id,
+    this.firstName,
+    this.lastName,
+    this.displayName,
     this.email,
-    this.phoneNumber,
-    this.role,
+    this.profileImageUrl,
     this.isActive,
-    this.createdOn,
+    this.lastLoginAt,
+    this.createdAt,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      _$UserModelFromJson(json);
+  String get name => (displayName?.trim().isNotEmpty ?? false)
+      ? displayName!
+      : [firstName, lastName].where((e) => (e ?? '').isNotEmpty).join(' ').trim();
 
-  Map<String, dynamic> toJson() => _$UserModelToJson(this);
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+        id: (json['id'] ?? '').toString(),
+        firstName: json['firstName'] as String?,
+        lastName: json['lastName'] as String?,
+        displayName: json['displayName'] as String?,
+        email: json['email'] as String?,
+        profileImageUrl: json['profileImageUrl'] as String?,
+        isActive: json['isActive'] as bool?,
+        lastLoginAt: json['lastLoginAt'] == null
+            ? null
+            : DateTime.tryParse(json['lastLoginAt'].toString()),
+        createdAt: json['createdAt'] == null
+            ? null
+            : DateTime.tryParse(json['createdAt'].toString()),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'firstName': firstName,
+        'lastName': lastName,
+        'displayName': displayName,
+        'email': email,
+        'profileImageUrl': profileImageUrl,
+        'isActive': isActive,
+        'lastLoginAt': lastLoginAt?.toIso8601String(),
+        'createdAt': createdAt?.toIso8601String(),
+      };
+}
+
+/// Payload for `PUT /api/users/me`.
+class UpdateUserRequest {
+  final String firstName;
+  final String lastName;
+  final String displayName;
+  final String? profileImageUrl;
+
+  UpdateUserRequest({
+    required this.firstName,
+    required this.lastName,
+    required this.displayName,
+    this.profileImageUrl,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'firstName': firstName,
+        'lastName': lastName,
+        'displayName': displayName,
+        if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+      };
 }

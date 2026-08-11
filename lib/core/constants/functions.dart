@@ -76,28 +76,12 @@ class UserSession {
 
   /// خصائص مختصرة
   static String? get id => user?.id;
-  static String? get fullName => user?.fullName;
+  static String? get fullName => user?.name;
+  static String? get displayName => user?.displayName ?? user?.name;
   static String? get email => user?.email;
-  static String? get phone => user?.phoneNumber;
-  static int? get role => user?.role;
   static bool get isActive => user?.isActive ?? false;
-  static String? get createdOn => user?.createdOn;
-
-  /// الاسم الأول
-  static String? get firstName {
-    if (user?.fullName == null) return null;
-
-    final names = user!.fullName!.split(' ');
-    return names.isNotEmpty ? names.first : null;
-  }
-
-  /// الاسم الأخير
-  static String? get lastName {
-    if (user?.fullName == null) return null;
-
-    final names = user!.fullName!.split(' ');
-    return names.length > 1 ? names.last : null;
-  }
+  static String? get firstName => user?.firstName;
+  static String? get lastName => user?.lastName;
 
   /// هل يوجد جلسة
   static bool get isLoggedIn =>

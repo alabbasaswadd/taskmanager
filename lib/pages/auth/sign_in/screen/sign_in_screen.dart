@@ -1,139 +1,138 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+
 import 'package:wallet/core/components/app_button.dart';
+import 'package:wallet/core/components/app_snackbar.dart';
 import 'package:wallet/core/components/app_text.dart';
 import 'package:wallet/core/components/app_text_form_field.dart';
 import 'package:wallet/core/constants/colors.dart';
-import 'package:wallet/pages/auth/sign_up/screen/sign_up_screen.dart';
-import 'package:wallet/pages/home/screen/home_screen.dart';
+import 'package:wallet/pages/auth/sign_in/cubit/auth_cubit.dart';
+import 'package:wallet/pages/main/main_shell.dart';
 
-class SignInScreen extends StatefulWidget {
+class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
-  static String id = "/sign-in";
+  static const String id = "/login";
 
   @override
-  State<SignInScreen> createState() => _SignInScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AuthCubit(),
+      child: const _SignInView(),
+    );
+  }
 }
 
-class _SignInScreenState extends State<SignInScreen> {
+class _SignInView extends StatefulWidget {
+  const _SignInView();
+  @override
+  State<_SignInView> createState() => _SignInViewState();
+}
+
+class _SignInViewState extends State<_SignInView> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _obscure = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _email.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  String? _validateEmail(String? v) {
-    if (v == null || v.trim().isEmpty) return 'field_required'.tr;
-    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) return 'email_invalid'.tr;
-    return null;
-  }
-
-  String? _validatePassword(String? v) {
-    if (v == null || v.isEmpty) return 'field_required'.tr;
-    if (v.length < 6) return 'password_min_length'.tr;
-    return null;
+  void _submit(BuildContext context) {
+    FocusScope.of(context).unfocus();
+    if (_formKey.currentState?.validate() ?? false) {
+      context.read<AuthCubit>().login(_email.text, _password.text);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(24.w),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: 40.h),
-
-                // ─── Logo ──────────────────────────────────────────────────
-                Container(
-                  width: 80.w,
-                  height: 80.w,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.kPrimaryColor, AppColors.kSecondColor],
-                    ),
-                    borderRadius: BorderRadius.circular(24.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.kPrimaryColor.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+        child: BlocConsumer<AuthCubit, AuthState>(
+          listener: (context, state) {
+            if (state.status == AuthStatus.success) {
+              Get.offAllNamed(MainShell.id);
+            } else if (state.status == AuthStatus.error) {
+              AppSnackbar.showError(context, state.error ?? 'error_unknown'.tr);
+            }
+          },
+          builder: (context, state) {
+            final loading = state.status == AuthStatus.loading;
+            return Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        height: 84.r,
+                        width: 84.r,
+                        decoration: BoxDecoration(
+                          color: AppColors.kPrimaryColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.workspaces_rounded,
+                            size: 42, color: AppColors.kPrimaryColor),
+                      ),
+                      SizedBox(height: 20.h),
+                      AppText('app_name'.tr, fontSize: 24, textAlign: TextAlign.center),
+                      SizedBox(height: 6.h),
+                      AppText('login_subtitle'.tr,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.kGreyColor,
+                          textAlign: TextAlign.center,
+                          maxLines: 2),
+                      SizedBox(height: 28.h),
+                      AppTextFormField(
+                        label: 'email'.tr,
+                        controller: _email,
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        validator: (v) => (v == null || !v.contains('@'))
+                            ? 'validation_email'.tr
+                            : null,
+                      ),
+                      SizedBox(height: 4.h),
+                      AppTextFormField(
+                        label: 'password'.tr,
+                        controller: _password,
+                        icon: Icons.lock_outline_rounded,
+                        obscureText: _obscure,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _submit(context),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscure
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined),
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                        ),
+                        validator: (v) => (v == null || v.length < 4)
+                            ? 'validation_password'.tr
+                            : null,
+                      ),
+                      SizedBox(height: 24.h),
+                      AppButton(
+                        text: 'login'.tr,
+                        isLoading: loading,
+                        onPressed: () => _submit(context),
                       ),
                     ],
                   ),
-                  child: Icon(Icons.task_alt_rounded, size: 44.sp, color: Colors.white),
                 ),
-                SizedBox(height: 24.h),
-                AppText(
-                  'welcome_back'.tr,
-                  textAlign: TextAlign.center,
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-                SizedBox(height: 8.h),
-                AppText(
-                  'sign_in_to_continue'.tr,
-                  style: TextStyle(fontSize: 14.sp, color: AppColors.kGreyColor),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 36.h),
-
-                // ─── Fields ────────────────────────────────────────────────
-                AppTextFormField(
-                  controller: _emailController,
-                  label: 'email'.tr,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: _validateEmail,
-                ),
-                SizedBox(height: 16.h),
-                AppTextFormField(
-                  controller: _passwordController,
-                  label: 'password'.tr,
-                  obscureText: _obscurePassword,
-                  validator: _validatePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                ),
-                SizedBox(height: 32.h),
-
-                AppButton(
-                  text: 'sign_in'.tr,
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      Get.offAllNamed(HomeScreen.id);
-                    }
-                  },
-                ),
-                SizedBox(height: 24.h),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AppText('dont_have_account'.tr, style: TextStyle(fontSize: 14.sp)),
-                    TextButton(
-                      onPressed: () => Get.toNamed(SignUpScreen.id),
-                      child: AppText('sign_up'.tr, color: AppColors.kPrimaryColor),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

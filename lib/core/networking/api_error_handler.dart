@@ -1,190 +1,159 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:get/get.dart';
 
+import '../constants/model/error_model.dart';
 import 'api_constans.dart';
-import 'api_error_model.dart';
 
-// TODO: wallahy I will refactor this .. Omar Ahmed
-enum DataSource {
-  NO_CONTENT,
-  BAD_REQUEST,
-  FORBIDDEN,
-  UNAUTORISED,
-  NOT_FOUND,
-  INTERNAL_SERVER_ERROR,
-  CONNECT_TIMEOUT,
-  CANCEL,
-  RECIEVE_TIMEOUT,
-  SEND_TIMEOUT,
-  CACHE_ERROR,
-  NO_INTERNET_CONNECTION,
-  // API_LOGIC_ERROR,
-  DEFAULT,
-}
+/// Single place that converts any thrown error (Dio transport errors, HTTP
+/// status codes, RFC 7807 ProblemDetails bodies) into a uniform, localized
+/// [ErrorModel]. Screens must never inspect [DioException], [SocketException],
+/// [FormatException] or raw status codes — they only ever see an [ErrorModel].
+class ErrorHandler {
+  ErrorHandler._();
 
-class ResponseCode {
-  static const int SUCCESS = 200; // success with data
-  static const int NO_CONTENT = 201; // success with no data (no content)
-  static const int BAD_REQUEST = 400; // failure, API rejected request
-  static const int UNAUTORISED = 401; // failure, user is not authorised
-  static const int FORBIDDEN = 403; //  failure, API rejected request
-  static const int INTERNAL_SERVER_ERROR = 500; // failure, crash in server side
-  static const int NOT_FOUND = 404; // failure, not found
-  static const int API_LOGIC_ERROR = 422; // API , lOGIC ERROR
+  static ErrorModel handle(dynamic error) {
+    if (error is DioException) return _fromDio(error);
+    if (error is SocketException) {
+      return _make(ApiErrorType.noInternet, ApiErrors.noInternetError);
+    }
+    return _make(ApiErrorType.unknown, ApiErrors.unknownError);
+  }
 
-  // local status code
-  static const int CONNECT_TIMEOUT = -1;
-  static const int CANCEL = -2;
-  static const int RECIEVE_TIMEOUT = -3;
-  static const int SEND_TIMEOUT = -4;
-  static const int CACHE_ERROR = -5;
-  static const int NO_INTERNET_CONNECTION = -6;
-  static const int DEFAULT = -7;
-}
-
-class ResponseMessage {
-  static const String NO_CONTENT =
-      ApiErrors.noContent; // success with no data (no content)
-  static const String BAD_REQUEST =
-      ApiErrors.badRequestError; // failure, API rejected request
-  static const String UNAUTORISED =
-      ApiErrors.unauthorizedError; // failure, user is not authorised
-  static const String FORBIDDEN =
-      ApiErrors.forbiddenError; //  failure, API rejected request
-  static const String INTERNAL_SERVER_ERROR =
-      ApiErrors.internalServerError; // failure, crash in server side
-  static const String NOT_FOUND =
-      ApiErrors.notFoundError; // failure, crash in server side
-
-  // local status code
-  static String CONNECT_TIMEOUT = ApiErrors.timeoutError;
-  static String CANCEL = ApiErrors.defaultError;
-  static String RECIEVE_TIMEOUT = ApiErrors.timeoutError;
-  static String SEND_TIMEOUT = ApiErrors.timeoutError;
-  static String CACHE_ERROR = ApiErrors.cacheError;
-  static String NO_INTERNET_CONNECTION = ApiErrors.noInternetError;
-  static String DEFAULT = ApiErrors.defaultError;
-}
-
-extension DataSourceExtension on DataSource {
-  ErrorModel getFailure() {
-    switch (this) {
-      case DataSource.NO_CONTENT:
-        return ErrorModel(
-          code: ResponseCode.NO_CONTENT,
-          message: ResponseMessage.NO_CONTENT,
-        );
-      case DataSource.BAD_REQUEST:
-        return ErrorModel(
-          code: ResponseCode.BAD_REQUEST,
-          message: ResponseMessage.BAD_REQUEST,
-        );
-      case DataSource.FORBIDDEN:
-        return ErrorModel(
-          code: ResponseCode.FORBIDDEN,
-          message: ResponseMessage.FORBIDDEN,
-        );
-      case DataSource.UNAUTORISED:
-        return ErrorModel(
-          code: ResponseCode.UNAUTORISED,
-          message: ResponseMessage.UNAUTORISED,
-        );
-      case DataSource.NOT_FOUND:
-        return ErrorModel(
-          code: ResponseCode.NOT_FOUND,
-          message: ResponseMessage.NOT_FOUND,
-        );
-      case DataSource.INTERNAL_SERVER_ERROR:
-        return ErrorModel(
-          code: ResponseCode.INTERNAL_SERVER_ERROR,
-          message: ResponseMessage.INTERNAL_SERVER_ERROR,
-        );
-      case DataSource.CONNECT_TIMEOUT:
-        return ErrorModel(
-          code: ResponseCode.CONNECT_TIMEOUT,
-          message: ResponseMessage.CONNECT_TIMEOUT,
-        );
-      case DataSource.CANCEL:
-        return ErrorModel(
-          code: ResponseCode.CANCEL,
-          message: ResponseMessage.CANCEL,
-        );
-      case DataSource.RECIEVE_TIMEOUT:
-        return ErrorModel(
-          code: ResponseCode.RECIEVE_TIMEOUT,
-          message: ResponseMessage.RECIEVE_TIMEOUT,
-        );
-      case DataSource.SEND_TIMEOUT:
-        return ErrorModel(
-          code: ResponseCode.SEND_TIMEOUT,
-          message: ResponseMessage.SEND_TIMEOUT,
-        );
-      case DataSource.CACHE_ERROR:
-        return ErrorModel(
-          code: ResponseCode.CACHE_ERROR,
-          message: ResponseMessage.CACHE_ERROR,
-        );
-      case DataSource.NO_INTERNET_CONNECTION:
-        return ErrorModel(
-          code: ResponseCode.NO_INTERNET_CONNECTION,
-          message: ResponseMessage.NO_INTERNET_CONNECTION,
-        );
-      case DataSource.DEFAULT:
-        return ErrorModel(
-          code: ResponseCode.DEFAULT,
-          message: ResponseMessage.DEFAULT,
-        );
+  static ErrorModel _fromDio(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return _make(ApiErrorType.timeout, ApiErrors.timeoutError);
+      case DioExceptionType.connectionError:
+        return _make(ApiErrorType.noInternet, ApiErrors.noInternetError);
+      case DioExceptionType.cancel:
+        return _make(ApiErrorType.cancelled, ApiErrors.unknownError);
+      case DioExceptionType.badCertificate:
+        return _make(ApiErrorType.server, ApiErrors.serviceUnavailable);
+      case DioExceptionType.badResponse:
+        return _fromStatus(e.response?.statusCode, e.response?.data);
+      case DioExceptionType.unknown:
+        if (e.error is SocketException) {
+          return _make(ApiErrorType.noInternet, ApiErrors.noInternetError);
+        }
+        if (e.response != null) {
+          return _fromStatus(e.response?.statusCode, e.response?.data);
+        }
+        return _make(ApiErrorType.unknown, ApiErrors.unknownError);
+      default:
+        // Covers any future DioExceptionType additions (e.g. transformTimeout).
+        return _make(ApiErrorType.unknown, ApiErrors.unknownError);
     }
   }
-}
 
-class ErrorHandler implements Exception {
-  late ErrorModel errorModel;
+  static ErrorModel _fromStatus(int? status, dynamic body) {
+    final parsed = _parseProblemDetails(body);
+    final type = _typeForStatus(status);
+    final fallbackKey = _fallbackKeyFor(type);
 
-  ErrorHandler.handle(dynamic error) {
-    if (error is DioException) {
-      errorModel = _handleError(error);
-    } else {
-      errorModel = DataSource.DEFAULT.getFailure();
+    return ErrorModel(
+      message: parsed.message ?? fallbackKey.tr,
+      errors: parsed.errors,
+      statusCode: status,
+      type: type,
+    );
+  }
+
+  static ApiErrorType _typeForStatus(int? status) {
+    switch (status) {
+      case 400:
+        return ApiErrorType.badRequest;
+      case 401:
+        return ApiErrorType.unauthorized;
+      case 403:
+        return ApiErrorType.forbidden;
+      case 404:
+        return ApiErrorType.notFound;
+      case 409:
+        return ApiErrorType.conflict;
+      case 422:
+        return ApiErrorType.validation;
+      case 429:
+        return ApiErrorType.tooManyRequests;
+      case 500:
+        return ApiErrorType.server;
+      case 502:
+      case 503:
+      case 504:
+        return ApiErrorType.serviceUnavailable;
+      default:
+        return ApiErrorType.unknown;
     }
   }
-}
 
-ErrorModel _handleError(DioException error) {
-  switch (error.type) {
-    case DioExceptionType.connectionTimeout:
-      return DataSource.CONNECT_TIMEOUT.getFailure();
-    case DioExceptionType.sendTimeout:
-      return DataSource.SEND_TIMEOUT.getFailure();
-    case DioExceptionType.receiveTimeout:
-      return DataSource.RECIEVE_TIMEOUT.getFailure();
-    case DioExceptionType.badResponse:
-      if (error.response != null &&
-          error.response?.statusCode != null &&
-          error.response?.statusMessage != null) {
-        return ErrorModel.fromJson(error.response!.data);
-      } else {
-        return DataSource.DEFAULT.getFailure();
+  static String _fallbackKeyFor(ApiErrorType type) {
+    switch (type) {
+      case ApiErrorType.badRequest:
+        return ApiErrors.badRequestError;
+      case ApiErrorType.unauthorized:
+        return ApiErrors.unauthorizedError;
+      case ApiErrorType.forbidden:
+        return ApiErrors.forbiddenError;
+      case ApiErrorType.notFound:
+        return ApiErrors.notFoundError;
+      case ApiErrorType.conflict:
+        return ApiErrors.conflictError;
+      case ApiErrorType.validation:
+        return ApiErrors.validationError;
+      case ApiErrorType.tooManyRequests:
+        return ApiErrors.tooManyRequests;
+      case ApiErrorType.server:
+        return ApiErrors.internalServerError;
+      case ApiErrorType.serviceUnavailable:
+        return ApiErrors.serviceUnavailable;
+      case ApiErrorType.timeout:
+        return ApiErrors.timeoutError;
+      case ApiErrorType.noInternet:
+        return ApiErrors.noInternetError;
+      case ApiErrorType.cancelled:
+      case ApiErrorType.unknown:
+        return ApiErrors.unknownError;
+    }
+  }
+
+  static ErrorModel _make(ApiErrorType type, String messageKey) =>
+      ErrorModel(message: messageKey.tr, type: type);
+
+  /// Parses an RFC 7807 ProblemDetails / ValidationProblemDetails body.
+  static _ParsedBody _parseProblemDetails(dynamic body) {
+    if (body is Map) {
+      final map = body.map((k, v) => MapEntry(k.toString(), v));
+
+      final message = (map['detail'] ?? map['title'] ?? map['message'])
+          ?.toString();
+
+      Map<String, List<String>>? errors;
+      final rawErrors = map['errors'];
+      if (rawErrors is Map) {
+        errors = {};
+        rawErrors.forEach((key, value) {
+          final list = value is List
+              ? value.map((e) => e.toString()).toList()
+              : <String>[value.toString()];
+          errors![key.toString()] = list;
+        });
+        if (errors.isEmpty) errors = null;
       }
-    case DioExceptionType.unknown:
-      if (error.response != null &&
-          error.response?.statusCode != null &&
-          error.response?.statusMessage != null) {
-        return ErrorModel.fromJson(error.response!.data);
-      } else {
-        return DataSource.DEFAULT.getFailure();
-      }
-    case DioExceptionType.cancel:
-      return DataSource.CANCEL.getFailure();
-    case DioExceptionType.connectionError:
-      return DataSource.DEFAULT.getFailure();
-    case DioExceptionType.badCertificate:
-      return DataSource.DEFAULT.getFailure();
-    case DioExceptionType.transformTimeout:
-      return DataSource.CONNECT_TIMEOUT.getFailure();
+      return _ParsedBody(message: message, errors: errors);
+    }
+
+    if (body is String && body.trim().isNotEmpty && body.length < 300) {
+      return _ParsedBody(message: body);
+    }
+    return const _ParsedBody();
   }
 }
 
-class ApiInternalStatus {
-  static const int SUCCESS = 0;
-  static const int FAILURE = 1;
+class _ParsedBody {
+  final String? message;
+  final Map<String, List<String>>? errors;
+  const _ParsedBody({this.message, this.errors});
 }

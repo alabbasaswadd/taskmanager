@@ -1,30 +1,51 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:wallet/core/constants/theme.dart';
-import 'package:wallet/core/localization/app_translations.dart';
-import 'package:wallet/pages/home/screen/home_screen.dart';
-import 'package:wallet/routes.dart';
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import 'package:wallet/core/constants/functions.dart';
+import 'package:wallet/core/constants/theme.dart';
+import 'package:wallet/core/localization/app_translations.dart';
+import 'package:wallet/core/networking/dio_factory.dart';
+import 'package:wallet/pages/auth/sign_in/screen/sign_in_screen.dart';
+import 'package:wallet/pages/main/main_shell.dart';
+import 'package:wallet/routes.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  // Bootstrap: restore session → configure Dio token → wire 401 handling.
+  await UserSession.init();
+  if (UserSession.isLoggedIn) {
+    DioFactory.setTokenIntoHeaderAfterLogin(UserSession.token);
+  }
+  DioFactory.onUnauthorized = _handleSessionExpired;
+
   runApp(
     ScreenUtilInit(
       designSize: const Size(392, 825),
       minTextAdapt: true,
-      builder: (context, child) => const MyApp(),
+      builder: (context, child) => MyApp(isLoggedIn: UserSession.isLoggedIn),
     ),
   );
 }
 
+/// Centralized session-expiry: clear session, drop token, return to login once.
+void _handleSessionExpired() {
+  UserSession.clear();
+  DioFactory.clearToken();
+  final current = Get.currentRoute;
+  if (current != SignInScreen.id) {
+    Get.offAllNamed(SignInScreen.id);
+  }
+}
+
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.isLoggedIn});
+  final bool isLoggedIn;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +67,7 @@ class MyApp extends StatelessWidget {
         darkTheme: darkTheme,
         routes: routes,
         debugShowCheckedModeBanner: false,
-        initialRoute: HomeScreen.id,
+        initialRoute: isLoggedIn ? MainShell.id : SignInScreen.id,
       ),
     );
   }
