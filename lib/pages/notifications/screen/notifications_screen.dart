@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' as intl;
 
-import 'package:wallet/core/components/app_text.dart';
 import 'package:wallet/core/components/shimmer_widgets.dart';
 import 'package:wallet/core/components/state_views.dart';
 import 'package:wallet/core/constants/colors.dart';
@@ -19,7 +18,7 @@ class NotificationsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = const _NotificationsView();
+    const body = _NotificationsView();
     if (cubit != null) return BlocProvider.value(value: cubit!, child: body);
     return BlocProvider(create: (_) => NotificationsCubit()..load(), child: body);
   }
@@ -42,24 +41,28 @@ class _NotificationsViewState extends State<_NotificationsView> {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<NotificationsCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        // ── Filter bar ────────────────────────────────────────────────────
+        Container(
+          color: Theme.of(context).appBarTheme.backgroundColor,
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(children: [
-            ChoiceChip(
-              label: Text('filter_all'.tr),
+            _FilterChip(
+              label: 'filter_all'.tr,
               selected: !_onlyUnread,
-              onSelected: (_) {
+              onTap: () {
                 setState(() => _onlyUnread = false);
                 cubit.load(onlyUnread: false);
               },
             ),
             const SizedBox(width: 8),
-            ChoiceChip(
-              label: Text('filter_unread'.tr),
+            _FilterChip(
+              label: 'filter_unread'.tr,
               selected: _onlyUnread,
-              onSelected: (_) {
+              onTap: () {
                 setState(() => _onlyUnread = true);
                 cubit.load(onlyUnread: true);
               },
@@ -67,11 +70,27 @@ class _NotificationsViewState extends State<_NotificationsView> {
             const Spacer(),
             TextButton.icon(
               onPressed: cubit.markAllRead,
-              icon: const Icon(Icons.done_all_rounded, size: 18),
-              label: Text('mark_all_read'.tr),
+              icon: Icon(Icons.done_all_rounded, size: 16, color: colorScheme.primary),
+              label: Text(
+                'mark_all_read'.tr,
+                style: TextStyle(
+                  fontFamily: 'Cairo-Bold',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ]),
         ),
+        Divider(height: 1, color: colorScheme.outline),
+
+        // ── List ──────────────────────────────────────────────────────────
         Expanded(
           child: BlocBuilder<NotificationsCubit, NotificationsState>(
             builder: (context, state) {
@@ -89,6 +108,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
                 );
               }
               return RefreshIndicator(
+                color: colorScheme.primary,
                 onRefresh: () => cubit.load(onlyUnread: _onlyUnread, refresh: true),
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
@@ -105,6 +125,41 @@ class _NotificationsViewState extends State<_NotificationsView> {
   }
 }
 
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppColors.radiusFull),
+          border: Border.all(
+            color: selected ? colorScheme.primary : colorScheme.outline,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Cairo-Bold',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NotificationTile extends StatelessWidget {
   const _NotificationTile({required this.n, required this.onTap});
   final NotificationModel n;
@@ -112,62 +167,111 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final cardColor = n.isRead
+        ? colorScheme.surface
+        : (isDark
+            ? colorScheme.primary.withValues(alpha: 0.1)
+            : colorScheme.primary.withValues(alpha: 0.05));
+
+    final borderColor = n.isRead
+        ? colorScheme.outline
+        : colorScheme.primary.withValues(alpha: 0.3);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: n.isRead
-            ? Theme.of(context).cardColor
-            : AppColors.kPrimaryColor.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: n.isRead
-              ? AppColors.kGreyColor.withOpacity(0.12)
-              : AppColors.kPrimaryColor.withOpacity(0.25),
-        ),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(AppColors.radiusMd),
+        border: Border.all(color: borderColor),
       ),
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppColors.radiusMd),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppColors.radiusMd),
+          highlightColor: Colors.transparent,
+          splashColor: colorScheme.primary.withValues(alpha: 0.08),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Icon badge ───────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.kPrimaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppColors.radiusSm),
                   ),
-                  child: Icon(n.type.icon, size: 20, color: AppColors.kPrimaryColor),
+                  child: Icon(n.type.icon, size: 18, color: colorScheme.primary),
                 ),
                 const SizedBox(width: 12),
+
+                // ── Content ──────────────────────────────────────────
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [
-                        Expanded(child: AppText(n.title, fontSize: 14, maxLines: 1)),
-                        if (!n.isRead)
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                                color: AppColors.kPrimaryColor, shape: BoxShape.circle),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              n.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Cairo-Bold',
+                                fontSize: 14,
+                                fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w700,
+                                color: colorScheme.onSurface,
+                                height: 1.4,
+                              ),
+                            ),
                           ),
-                      ]),
-                      const SizedBox(height: 4),
-                      AppText(n.message,
+                          if (!n.isRead) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(top: 4),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        n.message,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Cairo-Bold',
                           fontSize: 12,
-                          maxLines: 2,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.kGreyColor),
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
                       if (n.createdAt != null) ...[
                         const SizedBox(height: 6),
-                        AppText(intl.DateFormat('yyyy/MM/dd – HH:mm').format(n.createdAt!.toLocal()),
-                            fontSize: 10, color: AppColors.kGreyColor, fontWeight: FontWeight.w400),
+                        Text(
+                          intl.DateFormat('d/M/yyyy • HH:mm').format(n.createdAt!.toLocal()),
+                          style: TextStyle(
+                            fontFamily: 'Cairo-Bold',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w400,
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                            height: 1.4,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -177,6 +281,18 @@ class _NotificationTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class NotificationsScreen extends StatelessWidget {
+  const NotificationsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('notifications'.tr)),
+      body: const NotificationsBody(),
     );
   }
 }

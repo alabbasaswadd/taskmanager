@@ -10,7 +10,14 @@
       "Bash(Get-ChildItem -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Sort-Object)",
-      "Bash(Select-String -Pattern \"error\")"
+      "Bash(Select-String -Pattern \"error\")",
+      "Bash(git -C \"E:/flutter/task_manager/.claude/worktrees/agent-ae60a7601082486e5\" status)",
+      "Bash(git -C \"E:/flutter/task_manager/.claude/worktrees/agent-afb98861058ff1f07\" status)",
+      "Bash(git *)",
+      "Bash(flutter clean *)",
+      "PowerShell(flutter run *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(flutter test *)"
     ]
   }
 }

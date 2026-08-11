@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../constants/colors.dart';
 import 'app_button.dart';
-import 'app_text.dart';
 
 /// Intentional empty state for any list (icon + message + optional action).
 class EmptyStateView extends StatelessWidget {
@@ -24,6 +23,7 @@ class EmptyStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -33,21 +33,37 @@ class EmptyStateView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.kPrimaryColor.withOpacity(0.08),
+                color: colorScheme.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 48, color: AppColors.kPrimaryColor),
+              child: Icon(icon, size: 44, color: colorScheme.primary),
             ),
-            const SizedBox(height: 16),
-            AppText(title, fontSize: 16, textAlign: TextAlign.center),
+            const SizedBox(height: 18),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Cairo-Bold',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
+              ),
+            ),
             if (message != null) ...[
               const SizedBox(height: 8),
-              AppText(message!,
+              Text(
+                message!,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Cairo-Bold',
                   fontSize: 13,
-                  maxLines: 3,
-                  color: AppColors.kGreyColor,
                   fontWeight: FontWeight.w400,
-                  textAlign: TextAlign.center),
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
             ],
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 20),
@@ -72,19 +88,35 @@ class ErrorStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded, size: 48, color: AppColors.kGreyColor),
-            const SizedBox(height: 16),
-            AppText(message,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.error.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.cloud_off_rounded, size: 44, color: colorScheme.error),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Cairo-Bold',
                 fontSize: 14,
-                maxLines: 4,
                 fontWeight: FontWeight.w500,
-                textAlign: TextAlign.center),
+                color: colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: 20),
               SizedBox(
@@ -114,16 +146,27 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppColors.radiusSm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[Icon(icon, size: 13, color: color), const SizedBox(width: 4)],
-          AppText(label, fontSize: 11, color: color, fontWeight: FontWeight.w700),
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Cairo-Bold',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ],
       ),
     );

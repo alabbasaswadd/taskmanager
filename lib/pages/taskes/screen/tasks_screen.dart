@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' as intl;
 
-import 'package:wallet/core/components/app_text.dart';
 import 'package:wallet/core/components/shimmer_widgets.dart';
 import 'package:wallet/core/components/state_views.dart';
 import 'package:wallet/core/constants/colors.dart';
@@ -40,7 +39,7 @@ class _TasksListState extends State<_TasksList> {
     final cubit = context.read<TasksCubit>();
     return Column(
       children: [
-        _filters(cubit),
+        _filters(context, cubit),
         Expanded(
           child: BlocBuilder<TasksCubit, PagedListState<TaskItemModel>>(
             builder: (context, state) {
@@ -56,6 +55,7 @@ class _TasksListState extends State<_TasksList> {
                 );
               }
               return RefreshIndicator(
+                color: Theme.of(context).colorScheme.primary,
                 onRefresh: cubit.refresh,
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
@@ -63,9 +63,14 @@ class _TasksListState extends State<_TasksList> {
                   itemBuilder: (context, i) {
                     if (i >= state.items.length) {
                       cubit.loadMore();
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
                       );
                     }
                     return TaskCard(task: state.items[i]);
@@ -79,28 +84,53 @@ class _TasksListState extends State<_TasksList> {
     );
   }
 
-  Widget _filters(TasksCubit cubit) {
+  Widget _filters(BuildContext context, TasksCubit cubit) {
+    final colorScheme = Theme.of(context).colorScheme;
     final items = <MapEntry<String, TaskItemStatus?>>[
       MapEntry('filter_all'.tr, null),
       ...TaskItemStatus.values.map((s) => MapEntry(s.label, s)),
     ];
-    return SizedBox(
-      height: 46,
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: Theme.of(context).appBarTheme.backgroundColor,
+        border: Border(bottom: BorderSide(color: colorScheme.outline, width: 1)),
+      ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final e = items[i];
           final selected = _statusFilter == e.value;
-          return ChoiceChip(
-            label: Text(e.key),
-            selected: selected,
-            onSelected: (_) {
+          return GestureDetector(
+            onTap: () {
               setState(() => _statusFilter = e.value);
               cubit.filterByStatus(e.value);
             },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              decoration: BoxDecoration(
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(AppColors.radiusFull),
+                border: Border.all(
+                  color: selected ? colorScheme.primary : colorScheme.outline,
+                ),
+              ),
+              child: Text(
+                e.key,
+                style: TextStyle(
+                  fontFamily: 'Cairo-Bold',
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? Colors.white : colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           );
         },
       ),
@@ -114,52 +144,128 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final cardColor = Theme.of(context).cardTheme.color ?? colorScheme.surface;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.kGreyColor.withOpacity(0.12)),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(AppColors.radiusMd),
+        border: Border.all(color: colorScheme.outline),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          highlightColor: Colors.transparent,
+          splashColor: colorScheme.primary.withValues(alpha: 0.08),
           onTap: () => Get.to(() => TaskDetailsScreen(taskId: task.id)),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(children: [
-                  Icon(task.status.icon, size: 18, color: task.status.color),
-                  const SizedBox(width: 8),
-                  Expanded(child: AppText(task.title, fontSize: 14, maxLines: 2)),
-                ]),
-                const SizedBox(height: 10),
-                Row(children: [
-                  StatusChip(label: task.status.label, color: task.status.color),
-                  const SizedBox(width: 8),
-                  StatusChip(label: task.priority.label, color: task.priority.color),
-                  const Spacer(),
-                  if (task.dueDate != null) ...[
-                    const Icon(Icons.event_outlined, size: 14, color: AppColors.kGreyColor),
-                    const SizedBox(width: 4),
-                    AppText(intl.DateFormat('MM/dd').format(task.dueDate!),
-                        fontSize: 11, color: AppColors.kGreyColor),
-                  ],
-                  if (task.assigneesTotal > 0) ...[
-                    const SizedBox(width: 10),
-                    const Icon(Icons.people_alt_outlined, size: 14, color: AppColors.kGreyColor),
-                    const SizedBox(width: 4),
-                    AppText('${task.assigneesTotal}', fontSize: 11, color: AppColors.kGreyColor),
-                  ],
-                ]),
+                // Priority accent bar
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: task.priority.color,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(AppColors.radiusMd),
+                      bottomLeft: Radius.circular(AppColors.radiusMd),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                task.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Cairo-Bold',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: colorScheme.onSurface,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(task.status.icon, size: 17, color: task.status.color),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            StatusChip(label: task.status.label, color: task.status.color),
+                            const SizedBox(width: 6),
+                            StatusChip(label: task.priority.label, color: task.priority.color),
+                            const Spacer(),
+                            if (task.dueDate != null) _dueChip(context, task.dueDate!),
+                            if (task.assigneesTotal > 0) _assigneeChip(context, task.assigneesTotal),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _dueChip(BuildContext context, DateTime date) {
+    final overdue = date.isBefore(DateTime.now());
+    final color = overdue
+        ? AppColors.kRedColor
+        : Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.event_outlined, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(
+          intl.DateFormat('d/M').format(date),
+          style: TextStyle(
+            fontFamily: 'Cairo-Bold',
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _assigneeChip(BuildContext context, int count) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(width: 8),
+        Icon(Icons.people_alt_outlined, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(
+          '$count',
+          style: TextStyle(
+            fontFamily: 'Cairo-Bold',
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

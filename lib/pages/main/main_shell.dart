@@ -12,8 +12,6 @@ import 'package:wallet/pages/projects/screen/project_form_screen.dart';
 import 'package:wallet/pages/projects/screen/projects_screen.dart';
 import 'package:wallet/pages/taskes/screen/tasks_screen.dart';
 
-/// Main authenticated shell: bottom navigation across the primary areas.
-/// Keeps the three-click principle (Home → area → item).
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
   static const String id = "/home";
@@ -35,7 +33,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Refresh the unread badge when the app resumes (not on every rebuild).
     if (state == AppLifecycleState.resumed) _notifications.refreshUnread();
   }
 
@@ -46,9 +43,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void _goto(int index) {
-    setState(() => _index = index);
-    if (index == 3) _notifications.load();
+  void _goto(int index) => setState(() => _index = index);
+
+  Future<void> _openNotifications() async {
+    await Get.to(() => const NotificationsScreen());
+    _notifications.refreshUnread();
   }
 
   Future<void> _logout() async {
@@ -59,18 +58,46 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final titles = ['app_name'.tr, 'projects'.tr, 'tasks'.tr, 'notifications'.tr];
+    final colorScheme = Theme.of(context).colorScheme;
+    final titles = ['app_name'.tr, 'projects'.tr, 'tasks'.tr];
+
     return BlocProvider.value(
       value: _notifications,
       child: Scaffold(
         appBar: AppBar(
           title: Text(titles[_index]),
           actions: [
+            BlocBuilder<NotificationsCubit, NotificationsState>(
+              builder: (context, state) {
+                return IconButton(
+                  onPressed: _openNotifications,
+                  tooltip: 'notifications'.tr,
+                  icon: Badge(
+                    isLabelVisible: state.unreadCount > 0,
+                    backgroundColor: colorScheme.primary,
+                    label: Text(
+                      '${state.unreadCount}',
+                      style: const TextStyle(
+                        fontFamily: 'Cairo-Bold',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.notifications_none_rounded,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                );
+              },
+            ),
             IconButton(
               onPressed: _logout,
-              icon: const Icon(Icons.logout_rounded),
+              icon: Icon(Icons.logout_rounded, color: colorScheme.onSurface),
               tooltip: 'logout'.tr,
             ),
+            const SizedBox(width: 4),
           ],
         ),
         body: IndexedStack(
@@ -79,7 +106,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             DashboardBody(onNavigate: _goto),
             const ProjectsBody(),
             const TasksBody(),
-            NotificationsBody(cubit: _notifications),
           ],
         ),
         floatingActionButton: _index == 1
@@ -88,35 +114,27 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                 child: const Icon(Icons.add),
               )
             : null,
-        bottomNavigationBar: BlocBuilder<NotificationsCubit, NotificationsState>(
-          builder: (context, state) {
-            return NavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: _goto,
-              destinations: [
-                NavigationDestination(
-                    icon: const Icon(Icons.dashboard_outlined),
-                    selectedIcon: const Icon(Icons.dashboard_rounded),
-                    label: 'home'.tr),
-                NavigationDestination(
-                    icon: const Icon(Icons.folder_open_outlined),
-                    selectedIcon: const Icon(Icons.folder_rounded),
-                    label: 'projects'.tr),
-                NavigationDestination(
-                    icon: const Icon(Icons.check_circle_outline_rounded),
-                    selectedIcon: const Icon(Icons.check_circle_rounded),
-                    label: 'tasks'.tr),
-                NavigationDestination(
-                    icon: Badge(
-                      isLabelVisible: state.unreadCount > 0,
-                      label: Text('${state.unreadCount}'),
-                      child: const Icon(Icons.notifications_none_rounded),
-                    ),
-                    selectedIcon: const Icon(Icons.notifications_rounded),
-                    label: 'notifications'.tr),
-              ],
-            );
-          },
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: _goto,
+          animationDuration: const Duration(milliseconds: 300),
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.dashboard_outlined),
+              selectedIcon: const Icon(Icons.dashboard_rounded),
+              label: 'home'.tr,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.folder_open_outlined),
+              selectedIcon: const Icon(Icons.folder_rounded),
+              label: 'projects'.tr,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.check_circle_outline_rounded),
+              selectedIcon: const Icon(Icons.check_circle_rounded),
+              label: 'tasks'.tr,
+            ),
+          ],
         ),
       ),
     );

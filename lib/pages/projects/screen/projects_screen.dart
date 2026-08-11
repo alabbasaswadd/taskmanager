@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' as intl;
 
-import 'package:wallet/core/components/app_text.dart';
 import 'package:wallet/core/components/shimmer_widgets.dart';
 import 'package:wallet/core/components/state_views.dart';
 import 'package:wallet/core/constants/colors.dart';
@@ -46,6 +45,7 @@ class _ProjectsList extends StatelessWidget {
           );
         }
         return RefreshIndicator(
+          color: Theme.of(context).colorScheme.primary,
           onRefresh: cubit.refresh,
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
@@ -53,9 +53,14 @@ class _ProjectsList extends StatelessWidget {
             itemBuilder: (context, i) {
               if (i >= state.items.length) {
                 cubit.loadMore();
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 );
               }
               return ProjectCard(project: state.items[i]);
@@ -73,54 +78,129 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final cardColor = Theme.of(context).cardTheme.color ?? colorScheme.surface;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.kGreyColor.withOpacity(0.12)),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(AppColors.radiusLg),
+        border: Border.all(color: colorScheme.outline),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppColors.radiusLg),
+          highlightColor: Colors.transparent,
+          splashColor: colorScheme.primary.withValues(alpha: 0.08),
           onTap: () => Get.toNamed(ProjectDetailsScreen.id, arguments: project.id),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Expanded(child: AppText(project.name, fontSize: 15, maxLines: 1)),
-                    StatusChip(label: project.priority.label, color: project.priority.color),
-                  ],
+                // Status accent bar
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: project.status.color,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(AppColors.radiusLg),
+                      bottomLeft: Radius.circular(AppColors.radiusLg),
+                    ),
+                  ),
                 ),
-                if ((project.description ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  AppText(project.description!,
-                      fontSize: 12,
-                      maxLines: 2,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.kGreyColor),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    StatusChip(label: project.status.label, color: project.status.color),
-                    const Spacer(),
-                    const Icon(Icons.checklist_rounded, size: 15, color: AppColors.kGreyColor),
-                    const SizedBox(width: 4),
-                    AppText('${project.taskCount ?? 0}',
-                        fontSize: 12, color: AppColors.kGreyColor),
-                    if (project.targetDate != null) ...[
-                      const SizedBox(width: 12),
-                      const Icon(Icons.event_outlined, size: 15, color: AppColors.kGreyColor),
-                      const SizedBox(width: 4),
-                      AppText(intl.DateFormat('yyyy/MM/dd').format(project.targetDate!),
-                          fontSize: 12, color: AppColors.kGreyColor),
-                    ],
-                  ],
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                project.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Cairo-Bold',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: colorScheme.onSurface,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            StatusChip(
+                              label: project.priority.label,
+                              color: project.priority.color,
+                            ),
+                          ],
+                        ),
+                        if ((project.description ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 5),
+                          Text(
+                            project.description!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Cairo-Bold',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: colorScheme.onSurfaceVariant,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            StatusChip(
+                              label: project.status.label,
+                              color: project.status.color,
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.checklist_rounded,
+                              size: 13,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${project.taskCount ?? 0}',
+                              style: TextStyle(
+                                fontFamily: 'Cairo-Bold',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            if (project.targetDate != null) ...[
+                              const SizedBox(width: 10),
+                              Icon(
+                                Icons.event_outlined,
+                                size: 13,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                intl.DateFormat('d/M/yyyy').format(project.targetDate!),
+                                style: TextStyle(
+                                  fontFamily: 'Cairo-Bold',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

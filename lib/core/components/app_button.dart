@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../constants/colors.dart';
-import 'app_text.dart';
-
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.text,
     required this.onPressed,
-    this.color = AppColors.kPrimaryColor,
+    this.color,
     this.textColor = Colors.white,
     this.iconColor = Colors.white,
     this.isLoading = false,
@@ -20,9 +17,9 @@ class AppButton extends StatelessWidget {
     this.iconAlignment = MainAxisAlignment.center,
   });
 
-  final text;
-  final Function() onPressed;
-  final Color color;
+  final String text;
+  final VoidCallback onPressed;
+  final Color? color;
   final Color iconColor;
   final Color textColor;
   final bool isLoading;
@@ -35,27 +32,20 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Theme.of(context).colorScheme.primary;
     return Padding(
       padding: padding,
       child: Material(
-        color: color,
+        color: effectiveColor,
         borderRadius: BorderRadius.circular(borderRadius),
         elevation: elevation,
         child: InkWell(
           onTap: isLoading ? null : onPressed,
           borderRadius: BorderRadius.circular(borderRadius),
-          splashColor: Colors.white.withOpacity(0.2),
-          highlightColor: Colors.white.withOpacity(0.1),
-          child: Container(
+          highlightColor: Colors.transparent,
+          splashColor: Colors.white.withValues(alpha: 0.15),
+          child: SizedBox(
             height: height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(borderRadius),
-              gradient: LinearGradient(
-                colors: [color, Color.lerp(color, Colors.black, 0.1)!],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -64,12 +54,21 @@ class AppButton extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   child: Row(
                     mainAxisAlignment: iconAlignment,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       if (icon != null) ...[
-                        Icon(icon, color: iconColor),
+                        Icon(icon, color: iconColor, size: 18),
                         const SizedBox(width: 8),
                       ],
-                      AppText(text, color: Colors.white),
+                      Text(
+                        text,
+                        style: TextStyle(
+                          fontFamily: 'Cairo-Bold',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: textColor,
+                        ),
+                      ),
                     ],
                   ),
                 ),
