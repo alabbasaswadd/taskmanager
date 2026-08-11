@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 class AppTranslations extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
-        'ar': {..._ar, ..._arWorkspace},
-        'en': {..._en, ..._enWorkspace},
-      };
+    'ar': {..._ar, ..._arWorkspace},
+    'en': {..._en, ..._enWorkspace},
+  };
 }
 
 // ─── Arabic ───────────────────────────────────────────────────────────────────
@@ -171,7 +171,8 @@ const Map<String, String> _en = {
   'dont_have_account': "Don't have an account?",
   'already_have_account': 'Already have an account?',
   'create_account': 'Create Account',
-  'fill_details_to_continue': 'Fill in your details to start organizing your tasks',
+  'fill_details_to_continue':
+      'Fill in your details to start organizing your tasks',
   'field_required': 'This field is required',
   'email_invalid': 'Please enter a valid email',
   'password_min_length': 'Password must be at least 6 characters',
@@ -200,7 +201,8 @@ const Map<String, String> _en = {
   'task_title_hint': 'Enter task title',
   'task_description_hint': 'Enter task details...',
   'no_tasks': 'No Tasks',
-  'no_tasks_desc': 'No tasks yet\nThey will appear here once added from the server',
+  'no_tasks_desc':
+      'No tasks yet\nThey will appear here once added from the server',
   'tasks_loading_error': 'Failed to load tasks',
   'retry': 'Retry',
   'save': 'Save',
@@ -293,7 +295,8 @@ const Map<String, String> _arWorkspace = {
   'change_status': 'تغيير الحالة',
   'assignees': 'المكلّفون',
   'confirm_delete_title': 'تأكيد الحذف',
-  'confirm_delete_project': 'هل أنت متأكد من حذف هذا المشروع؟ سيتم حذف مهامه أيضاً.',
+  'confirm_delete_project':
+      'هل أنت متأكد من حذف هذا المشروع؟ سيتم حذف مهامه أيضاً.',
   'active_projects': 'مشاريع نشطة',
   'pending_tasks': 'مهام معلّقة',
   'unread_notifications': 'إشعارات غير مقروءة',
@@ -364,7 +367,8 @@ const Map<String, String> _enWorkspace = {
   'change_status': 'Change Status',
   'assignees': 'Assignees',
   'confirm_delete_title': 'Confirm Delete',
-  'confirm_delete_project': 'Delete this project? Its tasks will be deleted too.',
+  'confirm_delete_project':
+      'Delete this project? Its tasks will be deleted too.',
   'active_projects': 'Active Projects',
   'pending_tasks': 'Pending Tasks',
   'unread_notifications': 'Unread Notifications',

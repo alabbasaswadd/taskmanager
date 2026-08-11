@@ -10,9 +10,8 @@ import 'package:wallet/pages/auth/sign_in/model/user_model.dart';
 
 /// Authentication + current-user data source.
 ///
-/// NOTE: `POST /auth/login` is not yet implemented on the backend (see
-/// CLAUDE.md → Known Issues). The response is parsed defensively: it accepts
-/// either a bare `{ token, user }` or an envelope `{ data: { token, user } }`.
+/// Login response is parsed defensively: accepts either a bare `{ token, user }`
+/// or an envelope `{ data: { token, user } }`.
 class AuthRepository extends BaseApi {
   final Dio _dio = DioFactory.getDio();
 

@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:wallet/core/networking/api_constans.dart';
 
 /// Owns the single shared [Dio] instance and the Bearer token.
@@ -47,6 +49,18 @@ class DioFactory {
   static void clearToken() => setTokenIntoHeaderAfterLogin(null);
 
   static void _addInterceptors() {
+    if (kDebugMode) {
+      _dio?.interceptors.add(
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: false,
+          error: true,
+          compact: true,
+        ),
+      );
+    }
     _dio?.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
