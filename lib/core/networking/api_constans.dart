@@ -10,6 +10,7 @@ class ApiConstants {
 
   // ── Auth & current user ────────────────────────────────────────────────
   static const String login = "auth/login";
+  static const String register = "auth/register";
   static const String me = "users/me";
   static const String users = "users";
 

@@ -21,12 +21,33 @@ class AuthRepository extends BaseApi {
         ApiConstants.login,
         data: SigninRequestModel(email: email, password: password).toJson(),
       );
-      final data = res.data;
-      final payload = (data is Map && data['data'] is Map)
-          ? data['data'] as Map
-          : data as Map;
-      return SigninModel.fromJson(Map<String, dynamic>.from(payload));
+      return _parseAuth(res.data);
     });
+  }
+
+  Future<ApiResult<SigninModel>> register({
+    required String firstName,
+    required String lastName,
+    String? displayName,
+    required String email,
+    required String password,
+  }) {
+    return execute(request: () async {
+      final res = await _dio.post(ApiConstants.register, data: {
+        'firstName': firstName,
+        'lastName': lastName,
+        if (displayName != null && displayName.trim().isNotEmpty) 'displayName': displayName,
+        'email': email,
+        'password': password,
+      });
+      return _parseAuth(res.data);
+    });
+  }
+
+  // Accepts either a bare { token, user } or an envelope { data: { token, user } }.
+  SigninModel _parseAuth(dynamic data) {
+    final payload = (data is Map && data['data'] is Map) ? data['data'] as Map : data as Map;
+    return SigninModel.fromJson(Map<String, dynamic>.from(payload));
   }
 
   Future<ApiResult<UserModel>> getMe() {
