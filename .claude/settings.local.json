@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path . -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path ./lib -Recurse -Force | Select-Object @{Name=\"Path\";Expression={$_.FullName.Replace\\($PWD, \"\"\\).TrimStart\\(\"\\\\\"\\)}}, PSIsContainer | Format-Table -AutoSize)",
+      "Bash(flutter pub *)",
+      "Bash(flutter analyze *)",
+      "Bash(Get-ChildItem -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Select-String -Pattern \"error\")"
+    ]
+  }
+}
