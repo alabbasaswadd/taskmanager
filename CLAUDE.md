@@ -58,7 +58,7 @@ Layering: `Screen → Cubit → Repository → BaseApi → Dio`. Widgets never t
 
 ## API Base URL
 
-`https://mytasks.codetechsyria.com/api/` — set once in
+`https://mytask.api.codetechsyria.com/api/` — set once in
 `lib/core/networking/api_constans.dart` (`ApiConstants.apiBaseUrl`). **Never**
 hard-code endpoint paths; use `ApiConstants` (all endpoints centralized there).
 
@@ -75,13 +75,14 @@ hard-code endpoint paths; use `ApiConstants` (all endpoints centralized there).
 
 ## Authentication
 
-- Login: `POST /auth/login` via `AuthRepository` → `AuthCubit` → `SignInScreen`.
-- On success: set Dio token → persist session (`UserSession.updateSession`) →
-  `Get.offAllNamed(MainShell.id)` (login is removed from the stack).
-- ⚠️ **The backend has no `/auth/login` yet** (auth was out of scope server-side;
-  it currently authenticates via an `X-User-Id` header). The login flow is wired
-  against an **assumed** `{ token, user }` contract and will work once the backend
-  adds JWT. See **Known Issues**.
+- **Real JWT auth.** Login: `POST /auth/login`; Register: `POST /auth/register`
+  (`AuthRepository` → `AuthCubit` → `SignInScreen` / `RegisterScreen`). Both return
+  `{ token, expiresAtUtc, user }`.
+- On success: set Dio Bearer token → persist session (`UserSession.updateSession`)
+  → register FCM device → `Get.offAllNamed(MainShell.id)` (auth removed from stack).
+- **No refresh token** — persistent session; cleared only on explicit logout or a
+  401 (`DioFactory.onUnauthorized`). The backend token is long-lived (~30 days).
+- No account seeded on the server → use **Register** to create one, then log in.
 
 ## Session Management
 
@@ -231,11 +232,12 @@ Never hand-edit generated files.
 
 ## Known Issues
 
-- **No backend `/auth/login`** — login is wired against an assumed `{token,user}`
-  contract; works once the backend adds JWT. Until then the API also expects an
-  `X-User-Id` header for authenticated calls.
-- **Live API returns 404** at `…/api/*` at time of writing (API not yet routed at
-  that host); code targets the known contract.
+- **Backend redeploy required:** `/api/auth/login` + `/api/auth/register` and
+  JWT enforcement were just added server-side — rebuild/redeploy the API image for
+  them to go live. After that, all `/api/*` (except `/api/auth/*`) require a Bearer
+  token; unauthenticated calls return 401.
+- **Live API** is deployed at `https://mytask.api.codetechsyria.com/api/`
+  (OpenAPI at `/openapi/v1.json`, Swagger at `/swagger`).
 - `build_runner` unusable here (see above).
 - Legacy `signalr_service.dart` stub remains; SignalR not wired.
 
@@ -247,6 +249,13 @@ Never hand-edit generated files.
   to `@JsonSerializable` once build_runner works; broaden tests.
 
 ## Change Log
+
+### 2026-08-12 — Real JWT auth (login + register)
+- `AuthRepository.register` + `AuthCubit.register`; new `RegisterScreen` and a
+  "create account" link on the login screen.
+- Login/register parse `{ token, user }` and store a persistent session (no
+  refresh token). Base URL points to the live API.
+- Requires backend redeploy for `/api/auth/*` + JWT enforcement.
 
 ### 2026-08-11 — FCM integration
 - Added `firebase_core` + `firebase_messaging`; `PushNotificationService`

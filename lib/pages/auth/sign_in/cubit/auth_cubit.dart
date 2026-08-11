@@ -27,9 +27,29 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> login(String email, String password) async {
     emit(const AuthState(status: AuthStatus.loading));
-
     final result = await _repo.login(email.trim(), password);
+    await _complete(result);
+  }
 
+  Future<void> register({
+    required String firstName,
+    required String lastName,
+    String? displayName,
+    required String email,
+    required String password,
+  }) async {
+    emit(const AuthState(status: AuthStatus.loading));
+    final result = await _repo.register(
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      displayName: displayName?.trim(),
+      email: email.trim(),
+      password: password,
+    );
+    await _complete(result);
+  }
+
+  Future<void> _complete(ApiResult<SigninModel> result) async {
     await result.when(
       success: (SigninModel model) async {
         // 1. Configure Dio with the Bearer token.
@@ -39,7 +59,7 @@ class AuthCubit extends Cubit<AuthState> {
           SigninResponseModel(succeeded: true, data: model),
         );
         // Register this device for push notifications (asks permission once,
-        // then POSTs the FCM token). Fire-and-forget — never blocks login.
+        // then POSTs the FCM token). Fire-and-forget — never blocks auth.
         unawaited(PushNotificationService.requestPermissionAndRegister());
         emit(const AuthState(status: AuthStatus.success));
       },

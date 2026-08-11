@@ -9,6 +9,7 @@ import 'package:wallet/core/components/app_text.dart';
 import 'package:wallet/core/components/app_text_form_field.dart';
 import 'package:wallet/core/constants/colors.dart';
 import 'package:wallet/pages/auth/sign_in/cubit/auth_cubit.dart';
+import 'package:wallet/pages/auth/sign_up/screen/register_screen.dart';
 import 'package:wallet/pages/main/main_shell.dart';
 
 class SignInScreen extends StatelessWidget {
@@ -126,6 +127,12 @@ class _SignInViewState extends State<_SignInView> {
                         text: 'login'.tr,
                         isLoading: loading,
                         onPressed: () => _submit(context),
+                      ),
+                      SizedBox(height: 12.h),
+                      TextButton(
+                        onPressed: loading ? null : () => Get.to(() => const RegisterScreen()),
+                        child: AppText('dont_have_account_create'.tr,
+                            fontSize: 13, color: AppColors.kPrimaryColor),
                       ),
                     ],
                   ),

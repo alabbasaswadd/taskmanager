@@ -6,7 +6,7 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String apiBaseUrl = "https://mytasks.codetechsyria.com/api/";
+  static const String apiBaseUrl = "https://mytask.api.codetechsyria.com/api/";
 
   // ── Auth & current user ────────────────────────────────────────────────
   // NOTE: `POST /auth/login` is an ASSUMED contract — the current backend has
@@ -14,6 +14,7 @@ class ApiConstants {
   // The login flow is wired against this path so it works once the backend
   // adds JWT auth. See CLAUDE.md → "Known Issues".
   static const String login = "auth/login";
+  static const String register = "auth/register";
   static const String me = "users/me";
   static const String users = "users";
 
