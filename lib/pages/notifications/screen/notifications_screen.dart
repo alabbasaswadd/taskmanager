@@ -11,8 +11,7 @@ import 'package:wallet/core/enums/domain_enums.dart';
 import 'package:wallet/core/state/paged_list_state.dart';
 import 'package:wallet/pages/notifications/cubit/notifications_cubit.dart';
 import 'package:wallet/pages/notifications/model/notification_model.dart';
-import 'package:wallet/pages/projects/screen/project_details_screen.dart';
-import 'package:wallet/pages/taskes/screen/task_details_screen.dart';
+import 'package:wallet/pages/notifications/notification_navigator.dart';
 
 class NotificationsBody extends StatelessWidget {
   const NotificationsBody({super.key, this.cubit});
@@ -36,19 +35,8 @@ class _NotificationsViewState extends State<_NotificationsView> {
   bool _onlyUnread = false;
 
   void _open(NotificationModel n) {
-    final cubit = context.read<NotificationsCubit>();
-    if (!n.isRead) cubit.markAsRead(n.id);
-    switch (n.referenceType) {
-      case 'TaskItem':
-        if (n.referenceId != null) Get.to(() => TaskDetailsScreen(taskId: n.referenceId!));
-        break;
-      case 'Project':
-        if (n.referenceId != null) {
-          Get.toNamed(ProjectDetailsScreen.id, arguments: n.referenceId);
-        }
-        break;
-      // Request / Note references: navigation pending those screens.
-    }
+    if (!n.isRead) context.read<NotificationsCubit>().markAsRead(n.id);
+    NotificationNavigator.open(referenceType: n.referenceType, referenceId: n.referenceId);
   }
 
   @override

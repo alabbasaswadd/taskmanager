@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +11,7 @@ import 'package:wallet/core/constants/functions.dart';
 import 'package:wallet/core/constants/theme.dart';
 import 'package:wallet/core/localization/app_translations.dart';
 import 'package:wallet/core/networking/dio_factory.dart';
+import 'package:wallet/core/push/push_notification_service.dart';
 import 'package:wallet/pages/auth/sign_in/screen/sign_in_screen.dart';
 import 'package:wallet/pages/main/main_shell.dart';
 import 'package:wallet/routes.dart';
@@ -23,6 +26,13 @@ void main() async {
     DioFactory.setTokenIntoHeaderAfterLogin(UserSession.token);
   }
   DioFactory.onUnauthorized = _handleSessionExpired;
+
+  // FCM: set up listeners (no-op if Firebase client config is absent). For a
+  // returning authenticated user, refresh the device-token registration.
+  await PushNotificationService.initialize();
+  if (UserSession.isLoggedIn) {
+    unawaited(PushNotificationService.requestPermissionAndRegister());
+  }
 
   runApp(
     ScreenUtilInit(

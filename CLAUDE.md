@@ -149,10 +149,43 @@ In-app center only (list, all/unread, mark read/all, unread badge, navigate by
 `referenceType`/`referenceId`). Badge refreshes on app resume, on entering the
 tab, and after actions — never on every rebuild.
 
+## Authentication persistence (no JWT refresh)
+
+The session is **persistent**: the access token is saved via `UserSession` and
+restored on every launch (`main.dart`), then attached to Dio. There is **no
+refresh-token mechanism** and none should be added. The session is cleared only
+when (a) the user explicitly logs out, or (b) the backend returns **401** (central
+`DioFactory.onUnauthorized` → clear session → login). FCM token handling is
+entirely separate from this and never triggers a logout.
+
 ## Firebase / FCM & Device Token Registration
 
-**Not implemented** (deliberately, this phase). No `firebase_messaging`, no
-permission flow, no `POST /users/me/devices` (backend endpoint doesn't exist).
+Implemented via `firebase_core` + `firebase_messaging` (no extra plugins).
+
+- **`PushNotificationService`** (`lib/core/push/push_notification_service.dart`) —
+  the single push entry point: `initialize()` (called in `main`, sets up
+  background/foreground/tap listeners + token-refresh; **no-ops gracefully if
+  Firebase isn't configured**), and `requestPermissionAndRegister()` (called after
+  login and for a returning authenticated user).
+- **Permission** is requested only after login; denied/permanently-denied is
+  respected (never re-prompted, no registration).
+- **Device token** → `DevicesRepository.registerDevice(token, platform)` →
+  `POST /api/users/me/devices`. `onTokenRefresh` re-registers (backend upserts by
+  token, so no duplicates). This is FCM token management, **not** JWT refresh.
+- **Foreground** → in-app banner (`Get.snackbar`); **background/terminated** →
+  OS tray (top-level `firebaseBackgroundHandler`); **tap** (foreground or cold
+  start) → `NotificationNavigator.open(referenceType, referenceId)` deep-links to
+  the Task/Project (Request/Note pending their screens). Data keys from the
+  backend: `notificationId`, `type`, `referenceType`, `referenceId`.
+- **Unread count** — via the existing `/notifications/unread-count` (badge in the
+  shell), unchanged.
+
+⚠️ **Required setup (blocker until done):** the app needs Firebase **client**
+config — run `flutterfire configure` (project `gallery-440f9`) to add
+`google-services.json` (Android) / `GoogleService-Info.plist` (iOS) and the Gradle
+wiring. Until then the Android/iOS build won't include Firebase and push stays
+disabled (the app still runs; in-app notifications work over REST). The server
+**admin** key is NOT the client config and must never ship in the app.
 
 ## Theme / Design System
 
@@ -214,6 +247,17 @@ Never hand-edit generated files.
   to `@JsonSerializable` once build_runner works; broaden tests.
 
 ## Change Log
+
+### 2026-08-11 — FCM integration
+- Added `firebase_core` + `firebase_messaging`; `PushNotificationService`
+  (permission, token register/refresh, foreground banner, background handler,
+  tap → deep-link) with graceful no-op when Firebase client config is absent.
+- Device registration `DevicesRepository` → `POST/DELETE /api/users/me/devices`;
+  registered after login and for returning authenticated users.
+- Shared `NotificationNavigator` for reference-based navigation (reused by the
+  notification center and FCM taps).
+- Confirmed persistent session with **no JWT refresh** (logout / 401 only).
+- Requires `flutterfire configure` (google-services.json) to activate push.
 
 ### 2026-08-11
 - Connected the app to the Team Workspace API; centralized all endpoints in
