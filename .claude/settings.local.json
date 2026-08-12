@@ -17,7 +17,9 @@
       "Bash(flutter clean *)",
       "PowerShell(flutter run *)",
       "Bash(Get-ChildItem *)",
-      "Bash(flutter test *)"
+      "Bash(flutter test *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-Item \"E:\\\\flutter\\\\task_manager\\\\build\\\\app\\\\outputs\\\\flutter-apk\\\\app-release.apk\" | Select-Object FullName, @{N='Size\\(MB\\)';E={[math]::Round\\($_.Length/1MB,2\\)}}, LastWriteTime)"
     ]
   }
 }
