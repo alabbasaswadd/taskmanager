@@ -11,6 +11,7 @@ import 'package:wallet/pages/projects/api/projects_repository.dart';
 import 'package:wallet/pages/projects/model/project_model.dart';
 import 'package:wallet/pages/workspaces/api/workspaces_repository.dart';
 import 'package:wallet/pages/workspaces/model/workspace_model.dart';
+import 'package:wallet/pages/workspaces/screen/workspace_form_screen.dart';
 
 /// Create or edit a project. Pass [existing] to edit; omit to create.
 class ProjectFormScreen extends StatefulWidget {
@@ -33,6 +34,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   String? _workspaceId;
   List<WorkspaceModel> _workspaces = [];
   bool _loading = false;
+  bool _loadingWorkspaces = false;
 
   bool get _isEdit => widget.existing != null;
 
@@ -59,8 +61,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   }
 
   Future<void> _loadWorkspaces() async {
+    setState(() => _loadingWorkspaces = true);
     final res = await _wsRepo.getWorkspaces();
     if (!mounted) return;
+    setState(() => _loadingWorkspaces = false);
     res.when(
       success: (paged) => setState(() {
         _workspaces = paged.items;
@@ -68,6 +72,17 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       }),
       failure: (e) => AppSnackbar.showError(context, e.message ?? ''),
     );
+  }
+
+  /// Opens the create-workspace screen; on success adds it to the list and
+  /// preselects it so the user can immediately create a project.
+  Future<void> _createWorkspace() async {
+    final created = await Get.to<WorkspaceModel>(() => const WorkspaceFormScreen());
+    if (created == null || !mounted) return;
+    setState(() {
+      _workspaces = [created, ..._workspaces];
+      _workspaceId = created.id;
+    });
   }
 
   Future<void> _save() async {
@@ -107,6 +122,47 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     );
   }
 
+  Widget _buildWorkspaceField() {
+    if (_loadingWorkspaces) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // No workspaces yet: the picker would be empty, so guide the user to create
+    // one instead of leaving a dead dropdown they cannot select from.
+    if (_workspaces.isEmpty) {
+      return Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppText('no_workspaces_hint'.tr, fontSize: 14, fontWeight: FontWeight.w400),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _createWorkspace,
+                icon: const Icon(Icons.add),
+                label: Text('create_workspace'.tr),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return DropdownButtonFormField<String>(
+      initialValue: _workspaceId,
+      decoration: InputDecoration(labelText: 'workspace'.tr),
+      items: _workspaces
+          .map((w) => DropdownMenuItem(value: w.id, child: Text(w.name)))
+          .toList(),
+      onChanged: (v) => setState(() => _workspaceId = v),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,15 +172,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (!_isEdit)
-              DropdownButtonFormField<String>(
-                initialValue: _workspaceId,
-                decoration: InputDecoration(labelText: 'workspace'.tr),
-                items: _workspaces
-                    .map((w) => DropdownMenuItem(value: w.id, child: Text(w.name)))
-                    .toList(),
-                onChanged: (v) => setState(() => _workspaceId = v),
-              ),
+            if (!_isEdit) _buildWorkspaceField(),
             const SizedBox(height: 8),
             AppTextFormField(
               label: 'project_name'.tr,

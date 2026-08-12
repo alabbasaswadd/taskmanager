@@ -18,4 +18,11 @@ class WorkspacesRepository extends BaseApi {
       return PagedResult.fromJson(res.data as Map<String, dynamic>, WorkspaceModel.fromJson);
     });
   }
+
+  Future<ApiResult<WorkspaceModel>> createWorkspace(CreateWorkspaceRequest body) {
+    return execute(request: () async {
+      final res = await _dio.post(ApiConstants.workspaces, data: body.toJson());
+      return WorkspaceModel.fromJson(res.data as Map<String, dynamic>);
+    });
+  }
 }
