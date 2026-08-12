@@ -345,6 +345,8 @@ const Map<String, String> _arWorkspace = {
   'error_timeout': 'انتهت مهلة الاتصال، حاول مرة أخرى',
   'error_no_internet': 'لا يوجد اتصال بالإنترنت، تحقق من اتصالك',
   'error_unknown': 'حدث خطأ غير متوقع',
+  'no_workspaces': 'لا توجد مساحات عمل متاحة',
+  'workspace_load_error': 'تعذّر تحميل مساحات العمل',
 };
 
 const Map<String, String> _enWorkspace = {
@@ -423,4 +425,6 @@ const Map<String, String> _enWorkspace = {
   'error_timeout': 'Connection timed out, please try again',
   'error_no_internet': 'No internet connection, check your network',
   'error_unknown': 'An unexpected error occurred',
+  'no_workspaces': 'No workspaces available',
+  'workspace_load_error': 'Failed to load workspaces',
 };

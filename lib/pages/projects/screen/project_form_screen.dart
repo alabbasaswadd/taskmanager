@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wallet/core/components/app_button.dart';
+import 'package:wallet/core/components/shimmer_widgets.dart';
 import 'package:wallet/core/networking/api_result.dart';
 import 'package:wallet/core/components/app_snackbar.dart';
 import 'package:wallet/core/components/app_text.dart';
@@ -33,6 +34,8 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   String? _workspaceId;
   List<WorkspaceModel> _workspaces = [];
   bool _loading = false;
+  bool _wsLoading = false;
+  String? _wsError;
 
   bool get _isEdit => widget.existing != null;
 
@@ -59,14 +62,25 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   }
 
   Future<void> _loadWorkspaces() async {
+    setState(() {
+      _wsLoading = true;
+      _wsError = null;
+    });
     final res = await _wsRepo.getWorkspaces();
     if (!mounted) return;
     res.when(
       success: (paged) => setState(() {
+        _wsLoading = false;
         _workspaces = paged.items;
+        // _workspaceId is set here in the same setState that clears _wsLoading,
+        // so when DropdownButtonFormField is first created (after guard lifts),
+        // FormField.initState receives the correct pre-selected value.
         _workspaceId ??= paged.items.isNotEmpty ? paged.items.first.id : null;
       }),
-      failure: (e) => AppSnackbar.showError(context, e.message ?? ''),
+      failure: (e) => setState(() {
+        _wsLoading = false;
+        _wsError = e.message ?? 'workspace_load_error'.tr;
+      }),
     );
   }
 
@@ -107,6 +121,107 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     );
   }
 
+  /// Workspace selector with loading, error, empty, and ready states.
+  ///
+  /// The DropdownButtonFormField is only instantiated after loading completes so
+  /// that FormField.initState receives _workspaceId (the pre-selected value)
+  /// directly — bypassing the FormFieldState timing issue where didUpdateWidget
+  /// does not reset field.value when initialValue changes on a rebuild.
+  Widget _buildWorkspaceSelector() {
+    final cs = Theme.of(context).colorScheme;
+
+    if (_wsLoading) {
+      return const ShimmerWidget.rectangular(height: 56);
+    }
+
+    if (_wsError != null) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: cs.error.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(8),
+          color: cs.error.withValues(alpha: 0.06),
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+        child: Row(
+          children: [
+            Icon(Icons.cloud_off_outlined, size: 18, color: cs.error),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _wsError!,
+                style: TextStyle(
+                  fontFamily: 'Cairo-Bold',
+                  fontSize: 12,
+                  color: cs.error,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _loadWorkspaces,
+              icon: Icon(Icons.refresh_rounded, size: 14, color: cs.primary),
+              label: Text(
+                'retry'.tr,
+                style: TextStyle(
+                  fontFamily: 'Cairo-Bold',
+                  fontSize: 12,
+                  color: cs.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_workspaces.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: cs.outline),
+          borderRadius: BorderRadius.circular(8),
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Row(
+          children: [
+            Icon(Icons.workspaces_outlined, size: 18, color: cs.onSurfaceVariant),
+            const SizedBox(width: 10),
+            Text(
+              'no_workspaces'.tr,
+              style: TextStyle(
+                fontFamily: 'Cairo-Bold',
+                fontSize: 13,
+                color: cs.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // At this point _workspaceId is already set (same setState as _wsLoading=false),
+    // so initialValue: _workspaceId gives FormField the correct initial value immediately.
+    return DropdownButtonFormField<String>(
+      initialValue: _workspaceId,
+      decoration: InputDecoration(
+        labelText: 'workspace'.tr,
+        prefixIcon: const Icon(Icons.workspaces_outlined, size: 20),
+      ),
+      items: _workspaces
+          .map(
+            (w) => DropdownMenuItem(
+              value: w.id,
+              child: Text(
+                w.name,
+                style: const TextStyle(fontFamily: 'Cairo-Bold', fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: (v) => setState(() => _workspaceId = v),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,16 +231,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (!_isEdit)
-              DropdownButtonFormField<String>(
-                initialValue: _workspaceId,
-                decoration: InputDecoration(labelText: 'workspace'.tr),
-                items: _workspaces
-                    .map((w) => DropdownMenuItem(value: w.id, child: Text(w.name)))
-                    .toList(),
-                onChanged: (v) => setState(() => _workspaceId = v),
-              ),
-            const SizedBox(height: 8),
+            if (!_isEdit) ...[
+              _buildWorkspaceSelector(),
+              const SizedBox(height: 8),
+            ],
             AppTextFormField(
               label: 'project_name'.tr,
               controller: _name,
