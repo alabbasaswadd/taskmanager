@@ -27,3 +27,16 @@ class WorkspaceModel {
             : DateTime.tryParse(json['createdAt'].toString()),
       );
 }
+
+/// Mirrors backend `CreateWorkspaceRequest` ( `{ name, description? }` ).
+class CreateWorkspaceRequest {
+  final String name;
+  final String? description;
+
+  const CreateWorkspaceRequest({required this.name, this.description});
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        if (description != null) 'description': description,
+      };
+}

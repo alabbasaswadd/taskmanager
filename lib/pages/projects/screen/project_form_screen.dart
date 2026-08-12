@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wallet/core/components/app_button.dart';
+import 'package:wallet/core/components/app_text.dart';
 import 'package:wallet/core/components/shimmer_widgets.dart';
 import 'package:wallet/core/networking/api_result.dart';
 import 'package:wallet/core/components/app_snackbar.dart';
-import 'package:wallet/core/components/app_text.dart';
 import 'package:wallet/core/components/app_text_form_field.dart';
 import 'package:wallet/core/enums/domain_enums.dart';
 import 'package:wallet/pages/projects/api/projects_repository.dart';
 import 'package:wallet/pages/projects/model/project_model.dart';
 import 'package:wallet/pages/workspaces/api/workspaces_repository.dart';
 import 'package:wallet/pages/workspaces/model/workspace_model.dart';
+import 'package:wallet/pages/workspaces/screen/workspace_form_screen.dart';
 
 /// Create or edit a project. Pass [existing] to edit; omit to create.
 class ProjectFormScreen extends StatefulWidget {
@@ -72,9 +73,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       success: (paged) => setState(() {
         _wsLoading = false;
         _workspaces = paged.items;
-        // _workspaceId is set here in the same setState that clears _wsLoading,
-        // so when DropdownButtonFormField is first created (after guard lifts),
-        // FormField.initState receives the correct pre-selected value.
+        // _workspaceId is set in the same setState that clears _wsLoading,
+        // so when DropdownButtonFormField is first created (after the guard lifts),
+        // FormField.initState receives the correct pre-selected value immediately.
         _workspaceId ??= paged.items.isNotEmpty ? paged.items.first.id : null;
       }),
       failure: (e) => setState(() {
@@ -82,6 +83,17 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         _wsError = e.message ?? 'workspace_load_error'.tr;
       }),
     );
+  }
+
+  /// Opens the create-workspace screen; on success prepends it to the list and
+  /// preselects it so the user can immediately create a project.
+  Future<void> _createWorkspace() async {
+    final created = await Get.to<WorkspaceModel>(() => const WorkspaceFormScreen());
+    if (created == null || !mounted) return;
+    setState(() {
+      _workspaces = [created, ..._workspaces];
+      _workspaceId = created.id;
+    });
   }
 
   Future<void> _save() async {
@@ -173,27 +185,25 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       );
     }
 
+    // No workspaces yet: guide the user to create one instead of leaving a
+    // dead dropdown they cannot select from.
     if (_workspaces.isEmpty) {
-      return Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: cs.outline),
-          borderRadius: BorderRadius.circular(8),
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Row(
-          children: [
-            Icon(Icons.workspaces_outlined, size: 18, color: cs.onSurfaceVariant),
-            const SizedBox(width: 10),
-            Text(
-              'no_workspaces'.tr,
-              style: TextStyle(
-                fontFamily: 'Cairo-Bold',
-                fontSize: 13,
-                color: cs.onSurfaceVariant,
+      return Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppText('no_workspaces_hint'.tr, fontSize: 14, fontWeight: FontWeight.w400),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _createWorkspace,
+                icon: const Icon(Icons.add),
+                label: Text('create_workspace'.tr),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
