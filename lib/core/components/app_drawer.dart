@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wallet/core/components/app_alert_dialog.dart';
 import 'package:wallet/core/constants/colors.dart';
 import 'package:wallet/core/constants/functions.dart';
+import 'package:wallet/core/networking/dio_factory.dart';
 import 'package:wallet/pages/auth/sign_in/screen/sign_in_screen.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -108,8 +110,23 @@ class AppDrawer extends StatelessWidget {
               textColor: AppColors.kRedColor,
               onTap: () {
                 Navigator.pop(context);
-                UserSession.clear();
-                Get.offAllNamed(SignInScreen.id);
+                Get.dialog(
+                  AppAlertDialog(
+                    icon: Icons.logout_rounded,
+                    iconColor: AppColors.kRedColor,
+                    title: 'هل أنت متأكد من تسجيل الخروج؟',
+                    content: 'سيتم إنهاء جلسة تسجيل الدخول الحالية.',
+                    noLabel: 'إلغاء',
+                    okLabel: 'تسجيل الخروج',
+                    onNo: Get.back,
+                    onOk: () async {
+                      Get.back();
+                      await UserSession.clear();
+                      DioFactory.clearToken();
+                      Get.offAllNamed(SignInScreen.id);
+                    },
+                  ),
+                );
               },
             ),
             const SizedBox(height: 8),

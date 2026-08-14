@@ -81,4 +81,33 @@ class TasksCubit extends Cubit<PagedListState<TaskItemModel>> {
         priority: _priority,
         assigneeId: _assigneeId,
       );
+
+  void addTask(TaskItemModel task) {
+    if (isClosed) return;
+    final updated = [task, ...state.items];
+    emit(state.copyWith(
+      items: updated,
+      status: ViewStatus.success,
+      totalCount: state.totalCount + 1,
+    ));
+  }
+
+  /// Replaces a single task in the list state without an API call.
+  /// Used when the details screen has already successfully changed the status.
+  void updateTask(TaskItemModel updated) {
+    if (isClosed) return;
+    final items = state.items.map((t) => t.id == updated.id ? updated : t).toList();
+    emit(state.copyWith(items: items));
+  }
+
+  Future<bool> changeStatus(String taskId, TaskItemStatus newStatus) async {
+    final result = await _repo.changeStatus(taskId, newStatus);
+    return result.when(
+      success: (updated) {
+        updateTask(updated);
+        return true;
+      },
+      failure: (_) => false,
+    );
+  }
 }

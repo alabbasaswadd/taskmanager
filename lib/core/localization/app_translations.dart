@@ -352,6 +352,13 @@ const Map<String, String> _arWorkspace = {
   'error_unknown': 'حدث خطأ غير متوقع',
   'no_workspaces': 'لا توجد مساحات عمل متاحة',
   'workspace_load_error': 'تعذّر تحميل مساحات العمل',
+  'select_project': 'يرجى اختيار مشروع',
+  'no_projects_hint': 'لا توجد مشاريع بعد. أنشئ مشروعاً أولاً لتتمكن من إضافة مهمة.',
+  'needs_attention': 'يحتاج انتباهاً',
+  'due_soon': 'تستحق قريباً',
+  'task_status_updated': 'تم تحديث الحالة بنجاح',
+  'all_caught_up': 'رائع! مهامك منظّمة',
+  'all_caught_up_message': 'لا توجد مهام تحتاج انتباهك الآن',
 };
 
 const Map<String, String> _enWorkspace = {
@@ -437,4 +444,11 @@ const Map<String, String> _enWorkspace = {
   'error_unknown': 'An unexpected error occurred',
   'no_workspaces': 'No workspaces available',
   'workspace_load_error': 'Failed to load workspaces',
+  'select_project': 'Please select a project',
+  'no_projects_hint': 'No projects yet. Create a project first to add a task.',
+  'needs_attention': 'Needs Attention',
+  'due_soon': 'Due Soon',
+  'task_status_updated': 'Status updated successfully',
+  'all_caught_up': 'All Caught Up!',
+  'all_caught_up_message': 'No tasks need your attention right now',
 };

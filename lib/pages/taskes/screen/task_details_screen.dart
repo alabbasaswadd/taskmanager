@@ -11,8 +11,10 @@ import 'package:wallet/pages/taskes/api/tasks_repository.dart';
 import 'package:wallet/pages/taskes/model/task_item_model.dart';
 
 class TaskDetailsScreen extends StatefulWidget {
-  const TaskDetailsScreen({super.key, required this.taskId});
+  const TaskDetailsScreen({super.key, required this.taskId, this.onStatusChanged});
   final String taskId;
+  // Called with the updated task after a successful status change.
+  final void Function(TaskItemModel updated)? onStatusChanged;
 
   @override
   State<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
@@ -27,8 +29,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     super.initState();
     _future = _repo.getTask(widget.taskId);
   }
-
-  void _reload() => setState(() => _future = _repo.getTask(widget.taskId));
 
   Future<void> _changeStatus(TaskItemModel t) async {
     final colorScheme = Theme.of(context).colorScheme;
@@ -95,7 +95,11 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       final res = await _repo.changeStatus(widget.taskId, selected);
       if (!mounted) return;
       res.when(
-        success: (_) => _reload(),
+        success: (updated) {
+          widget.onStatusChanged?.call(updated);
+          if (mounted) AppSnackbar.showSuccess(context, 'task_status_updated'.tr);
+          Get.back(result: true);
+        },
         failure: (e) => AppSnackbar.showError(context, e.message ?? ''),
       );
     }
@@ -117,7 +121,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           }
           return snap.data!.when(
             success: (t) => _content(t),
-            failure: (e) => ErrorStateView(message: e.message ?? '', onRetry: _reload),
+            failure: (e) => ErrorStateView(
+                  message: e.message ?? '',
+                  onRetry: () => setState(() {
+                    _future = _repo.getTask(widget.taskId);
+                  }),
+                ),
           );
         },
       ),

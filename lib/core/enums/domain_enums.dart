@@ -4,30 +4,33 @@ import 'package:json_annotation/json_annotation.dart';
 
 import '../constants/colors.dart';
 
-// ── Parse helpers (API string → enum), used by the manual model fromJson ──────
-T _parse<T>(List<T> values, String Function(T) api, String? raw, T fallback) {
+// ── Parse helpers (API value → enum), used by the manual model fromJson ──────
+// Handles both integer (backend default enum serialization) and string values.
+T _parse<T>(List<T> values, String Function(T) api, dynamic raw, T fallback) {
   if (raw == null) return fallback;
+  if (raw is int) return raw >= 0 && raw < values.length ? values[raw] : fallback;
+  final s = raw.toString();
   for (final v in values) {
-    if (api(v) == raw) return v;
+    if (api(v) == s) return v;
   }
   return fallback;
 }
 
-ProjectStatus projectStatusFromApi(String? v) =>
+ProjectStatus projectStatusFromApi(dynamic v) =>
     _parse(ProjectStatus.values, (e) => e.api, v, ProjectStatus.planning);
-ProjectPriority projectPriorityFromApi(String? v) =>
+ProjectPriority projectPriorityFromApi(dynamic v) =>
     _parse(ProjectPriority.values, (e) => e.api, v, ProjectPriority.medium);
-TaskItemStatus taskStatusFromApi(String? v) =>
+TaskItemStatus taskStatusFromApi(dynamic v) =>
     _parse(TaskItemStatus.values, (e) => e.api, v, TaskItemStatus.todo);
-TaskPriority taskPriorityFromApi(String? v) =>
+TaskPriority taskPriorityFromApi(dynamic v) =>
     _parse(TaskPriority.values, (e) => e.api, v, TaskPriority.medium);
-RequestStatus requestStatusFromApi(String? v) =>
+RequestStatus requestStatusFromApi(dynamic v) =>
     _parse(RequestStatus.values, (e) => e.api, v, RequestStatus.pending);
-RequestPriority requestPriorityFromApi(String? v) =>
+RequestPriority requestPriorityFromApi(dynamic v) =>
     _parse(RequestPriority.values, (e) => e.api, v, RequestPriority.medium);
-WorkspaceRole workspaceRoleFromApi(String? v) =>
+WorkspaceRole workspaceRoleFromApi(dynamic v) =>
     _parse(WorkspaceRole.values, (e) => e.api, v, WorkspaceRole.member);
-NotificationType notificationTypeFromApi(String? v) => _parse(
+NotificationType notificationTypeFromApi(dynamic v) => _parse(
     NotificationType.values,
     (e) => _notificationApi[e]!,
     v,

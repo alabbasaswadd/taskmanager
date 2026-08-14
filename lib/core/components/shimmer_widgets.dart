@@ -80,46 +80,39 @@ class DashboardShimmer extends StatelessWidget {
       highlightColor: _highlightColor(context),
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting card
-            const _ShimmerBox(width: double.infinity, height: 120, borderRadius: 20),
+            const _ShimmerBox(width: double.infinity, height: 110, borderRadius: 20),
             const SizedBox(height: 20),
-            // Section label
-            const _ShimmerBox(width: 100, height: 16),
-            const SizedBox(height: 12),
-            // Stats row
             Row(
               children: const [
-                Expanded(child: _ShimmerBox(width: double.infinity, height: 100, borderRadius: 16)),
+                Expanded(child: _ShimmerBox(width: double.infinity, height: 96, borderRadius: 16)),
                 SizedBox(width: 10),
-                Expanded(child: _ShimmerBox(width: double.infinity, height: 100, borderRadius: 16)),
+                Expanded(child: _ShimmerBox(width: double.infinity, height: 96, borderRadius: 16)),
                 SizedBox(width: 10),
-                Expanded(child: _ShimmerBox(width: double.infinity, height: 100, borderRadius: 16)),
+                Expanded(child: _ShimmerBox(width: double.infinity, height: 96, borderRadius: 16)),
               ],
             ),
+            const SizedBox(height: 24),
+            const _ShimmerBox(width: 140, height: 18, borderRadius: 8),
+            const SizedBox(height: 10),
+            const _ShimmerBox(width: double.infinity, height: 70, borderRadius: 12),
+            const SizedBox(height: 8),
+            const _ShimmerBox(width: double.infinity, height: 70, borderRadius: 12),
+            const SizedBox(height: 8),
+            const _ShimmerBox(width: double.infinity, height: 70, borderRadius: 12),
             const SizedBox(height: 20),
-            // Progress card
-            const _ShimmerBox(width: double.infinity, height: 90, borderRadius: 16),
-            const SizedBox(height: 20),
-            // Section label
-            const _ShimmerBox(width: 120, height: 16),
-            const SizedBox(height: 12),
-            // Task items
-            ..._buildTaskShimmers(),
+            const _ShimmerBox(width: 140, height: 18, borderRadius: 8),
+            const SizedBox(height: 10),
+            const _ShimmerBox(width: double.infinity, height: 70, borderRadius: 12),
+            const SizedBox(height: 8),
+            const _ShimmerBox(width: double.infinity, height: 70, borderRadius: 12),
           ],
         ),
       ),
     );
-  }
-
-  List<Widget> _buildTaskShimmers() {
-    return List.generate(4, (_) => const Padding(
-      padding: EdgeInsets.only(bottom: 10),
-      child: _ShimmerBox(width: double.infinity, height: 68, borderRadius: 14),
-    ));
   }
 }
 

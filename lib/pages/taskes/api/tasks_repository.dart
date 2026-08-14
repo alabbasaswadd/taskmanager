@@ -55,8 +55,16 @@ class TasksRepository extends BaseApi {
 
   Future<ApiResult<TaskItemModel>> changeStatus(String id, TaskItemStatus status) {
     return execute(request: () async {
-      final res = await _dio.patch(ApiConstants.taskStatus(id), data: {'status': status.api});
-      return TaskItemModel.fromJson(res.data as Map<String, dynamic>);
+      final patchRes = await _dio.patch(
+        ApiConstants.taskStatus(id),
+        data: {'status': status.index},
+      );
+      // Some backends return 200 with the updated task; others return 204 No Content.
+      if (patchRes.data is Map<String, dynamic>) {
+        return TaskItemModel.fromJson(patchRes.data as Map<String, dynamic>);
+      }
+      final getRes = await _dio.get(ApiConstants.task(id));
+      return TaskItemModel.fromJson(getRes.data as Map<String, dynamic>);
     });
   }
 

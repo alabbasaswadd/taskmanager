@@ -70,4 +70,14 @@ class ProjectsCubit extends Cubit<PagedListState<ProjectModel>> {
         workspaceId: _workspaceId,
         refresh: true,
       );
+
+  void addProject(ProjectModel project) {
+    if (isClosed) return;
+    final updated = [project, ...state.items];
+    emit(state.copyWith(
+      items: updated,
+      status: ViewStatus.success,
+      totalCount: state.totalCount + 1,
+    ));
+  }
 }

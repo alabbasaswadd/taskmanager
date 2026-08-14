@@ -11,18 +11,14 @@ import 'package:wallet/core/state/paged_list_state.dart';
 import 'package:wallet/pages/taskes/cubit/tasks_cubit.dart';
 import 'package:wallet/pages/taskes/model/task_item_model.dart';
 import 'package:wallet/pages/taskes/screen/task_details_screen.dart';
+import 'package:wallet/pages/taskes/screen/task_form_screen.dart';
 
-/// Tasks tab body (all tasks across the user's workspaces).
+/// Tasks tab body — cubit is provided by the parent (MainShell).
 class TasksBody extends StatelessWidget {
   const TasksBody({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => TasksCubit()..load(),
-      child: const _TasksList(),
-    );
-  }
+  Widget build(BuildContext context) => const _TasksList();
 }
 
 class _TasksList extends StatefulWidget {
@@ -52,6 +48,12 @@ class _TasksListState extends State<_TasksList> {
                   icon: Icons.check_circle_outline_rounded,
                   title: 'tasks_empty_title'.tr,
                   message: 'tasks_empty_message'.tr,
+                  actionLabel: 'add_task'.tr,
+                  onAction: () async {
+                    final result =
+                        await Get.to<TaskItemModel>(() => const TaskFormScreen());
+                    if (result != null) cubit.addTask(result);
+                  },
                 );
               }
               return RefreshIndicator(
@@ -160,7 +162,13 @@ class TaskCard extends StatelessWidget {
         child: InkWell(
           highlightColor: Colors.transparent,
           splashColor: colorScheme.primary.withValues(alpha: 0.08),
-          onTap: () => Get.to(() => TaskDetailsScreen(taskId: task.id)),
+          onTap: () {
+            final cubit = context.read<TasksCubit>();
+            Get.to(() => TaskDetailsScreen(
+              taskId: task.id,
+              onStatusChanged: cubit.updateTask,
+            ));
+          },
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,

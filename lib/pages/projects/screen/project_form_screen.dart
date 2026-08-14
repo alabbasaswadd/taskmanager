@@ -88,7 +88,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   /// Opens the create-workspace screen; on success prepends it to the list and
   /// preselects it so the user can immediately create a project.
   Future<void> _createWorkspace() async {
-    final created = await Get.to<WorkspaceModel>(() => const WorkspaceFormScreen());
+    final created = await Get.to<WorkspaceModel>(
+      () => const WorkspaceFormScreen(),
+    );
     if (created == null || !mounted) return;
     setState(() {
       _workspaces = [created, ..._workspaces];
@@ -108,7 +110,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             widget.existing!.id,
             UpdateProjectRequest(
               name: _name.text.trim(),
-              description: _description.text.trim().isEmpty ? null : _description.text.trim(),
+              description: _description.text.trim().isEmpty
+                  ? null
+                  : _description.text.trim(),
               priority: _priority,
               targetDate: _targetDate,
             ),
@@ -117,7 +121,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             CreateProjectRequest(
               workspaceId: _workspaceId!,
               name: _name.text.trim(),
-              description: _description.text.trim().isEmpty ? null : _description.text.trim(),
+              description: _description.text.trim().isEmpty
+                  ? null
+                  : _description.text.trim(),
               priority: _priority,
               targetDate: _targetDate,
             ),
@@ -125,9 +131,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     if (!mounted) return;
     setState(() => _loading = false);
     res.when(
-      success: (_) {
+      success: (project) {
         AppSnackbar.showSuccess(context, 'saved'.tr);
-        Get.back(result: true);
+        Get.back(result: project);
       },
       failure: (e) => AppSnackbar.showError(context, e.message ?? ''),
     );
@@ -195,7 +201,11 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppText('no_workspaces_hint'.tr, fontSize: 14, fontWeight: FontWeight.w400),
+              AppText(
+                'no_workspaces_hint'.tr,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: _createWorkspace,
@@ -235,7 +245,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'edit_project'.tr : 'new_project'.tr)),
+      appBar: AppBar(
+        title: Text(_isEdit ? 'edit_project'.tr : 'new_project'.tr),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -248,7 +260,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             AppTextFormField(
               label: 'project_name'.tr,
               controller: _name,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'validation_required'.tr : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'validation_required'.tr
+                  : null,
             ),
             AppTextFormField(
               label: 'description'.tr,
@@ -262,7 +276,8 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
               items: ProjectPriority.values
                   .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
                   .toList(),
-              onChanged: (v) => setState(() => _priority = v ?? ProjectPriority.medium),
+              onChanged: (v) =>
+                  setState(() => _priority = v ?? ProjectPriority.medium),
             ),
             const SizedBox(height: 12),
             ListTile(

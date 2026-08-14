@@ -32,7 +32,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     _future = _repo.getProject(_projectId);
   }
 
-  void _reload() => setState(() => _future = _repo.getProject(_projectId));
+  void _reload() => setState(() { _future = _repo.getProject(_projectId); });
 
   Future<void> _changeStatus(ProjectModel p) async {
     final colorScheme = Theme.of(context).colorScheme;

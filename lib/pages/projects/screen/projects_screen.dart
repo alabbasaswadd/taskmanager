@@ -12,17 +12,12 @@ import 'package:wallet/pages/projects/cubit/projects_cubit.dart';
 import 'package:wallet/pages/projects/model/project_model.dart';
 import 'package:wallet/pages/projects/screen/project_details_screen.dart';
 
-/// Projects tab body — self-contained (provides its own cubit).
+/// Projects tab body — cubit is provided by the parent (MainShell).
 class ProjectsBody extends StatelessWidget {
   const ProjectsBody({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ProjectsCubit()..load(),
-      child: const _ProjectsList(),
-    );
-  }
+  Widget build(BuildContext context) => const _ProjectsList();
 }
 
 class _ProjectsList extends StatelessWidget {
