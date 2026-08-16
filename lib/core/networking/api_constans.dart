@@ -6,7 +6,7 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String apiBaseUrl = "https://mytask.api.codetechsyria.com/api/";
+  static const String apiBaseUrl = "https://mytasks.codetechsyria.com/api/";
 
   // ── Auth & current user ────────────────────────────────────────────────
   static const String login = "auth/login";

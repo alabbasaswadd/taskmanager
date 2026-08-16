@@ -15,22 +15,22 @@ class AppTextFormField extends StatelessWidget {
     this.prefixIconColor,
     this.onTap,
     this.readOnly,
-    this.horizontalPadding = 0.0, // المسافة الجانبية الافتراضية
-    this.borderRadius = 8.0, // نصف قطر الحواف الافتراضي
-    this.fillColor, // لون الخلفية
-    this.enabled = true, // هل الحقل مفعل
-    this.onChanged, // دالة عند تغيير النص
-    this.onEditingComplete, // دالة عند اكمال التحرير
-    this.onFieldSubmitted, // دالة عند إرسال الحقل
-    this.focusNode, // عقدة التركيز
-    this.textInputAction, // إجراء زر الإدخال
-    this.autofocus = false, // التركيز التلقائي
-    this.maxLines = 1, // عدد الأسطر
-    this.minLines, // أقل عدد أسطر
-    this.maxLength, // أقصى طول
-    this.counterText, // نص العداد
-    this.hintText, // نص تلميح
-    this.hintStyle, // نمط نص التلميح
+    this.horizontalPadding = 0.0,
+    this.borderRadius = 12.0,
+    this.fillColor,
+    this.enabled = true,
+    this.onChanged,
+    this.onEditingComplete,
+    this.onFieldSubmitted,
+    this.focusNode,
+    this.textInputAction,
+    this.autofocus = false,
+    this.maxLines = 1,
+    this.minLines,
+    this.maxLength,
+    this.counterText,
+    this.hintText,
+    this.hintStyle,
   });
 
   final String label;
@@ -44,134 +44,149 @@ class AppTextFormField extends StatelessWidget {
   final String? Function(String?)? validator;
   final Function()? onTap;
   final bool? readOnly;
-  final double horizontalPadding; // المسافة الجانبية
-  final double borderRadius; // نصف قطر الحواف الدائرية
-  final Color? fillColor; // لون خلفية الحقل
-  final bool enabled; // حالة تفعيل الحقل
-  final ValueChanged<String>? onChanged; // عند تغيير النص
-  final VoidCallback? onEditingComplete; // عند اكمال التحرير
-  final ValueChanged<String>? onFieldSubmitted; // عند إرسال الحقل
-  final FocusNode? focusNode; // عقدة التركيز
-  final TextInputAction? textInputAction; // إجراء زر الإدخال
-  final bool autofocus; // التركيز التلقائي
-  final int? maxLines; // الحد الأقصى للأسطر
-  final int? minLines; // الحد الأدنى للأسطر
-  final int? maxLength; // الحد الأقصى للأحرف
-  final String? counterText; // نص عداد الأحرف
-  final String? hintText; // نص تلميح داخل الحقل
-  final TextStyle? hintStyle; // نمط نص التلميح
+  final double horizontalPadding;
+  final double borderRadius;
+  final Color? fillColor;
+  final bool enabled;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onEditingComplete;
+  final ValueChanged<String>? onFieldSubmitted;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final bool autofocus;
+  final int? maxLines;
+  final int? minLines;
+  final int? maxLength;
+  final String? counterText;
+  final String? hintText;
+  final TextStyle? hintStyle;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final outline = Theme.of(context).colorScheme.outline;
+
+    // Subtle fill: Slate 50 in light, Slate 800 in dark
+    final defaultFill = fillColor ??
+        (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC));
+
+    // Border colors derived from theme
+    final enabledBorderColor = outline.withValues(alpha: isDark ? 0.25 : 0.35);
+    final disabledBorderColor = outline.withValues(alpha: 0.12);
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-        child: Card(
-          elevation: 0, // ارتفاع ظل البطاقة
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+      child: TextFormField(
+        style: TextStyle(
+          fontFamily: 'Cairo-Bold',
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: enabled ? onSurface : onSurface.withValues(alpha: 0.45),
+        ),
+        onTap: onTap,
+        readOnly: readOnly ?? false,
+        keyboardType: keyboardType,
+        obscureText: obscureText,
+        controller: controller,
+        validator: validator,
+        cursorColor: AppColors.kPrimaryColor,
+        cursorWidth: 1.5,
+        enabled: enabled,
+        onChanged: onChanged,
+        onEditingComplete: onEditingComplete,
+        onFieldSubmitted: onFieldSubmitted,
+        focusNode: focusNode,
+        textInputAction: textInputAction,
+        autofocus: autofocus,
+        maxLines: maxLines,
+        minLines: minLines,
+        maxLength: maxLength,
+        decoration: InputDecoration(
+          errorMaxLines: 3,
+          suffixIcon: suffixIcon,
+          prefixIcon: icon != null
+              ? Icon(
+                  icon,
+                  color: prefixIconColor ?? AppColors.kPrimaryColor,
+                  size: 20,
+                )
+              : null,
+          fillColor: defaultFill,
+          filled: true,
+          // Floating label
+          labelText: label,
+          labelStyle: TextStyle(
+            fontFamily: 'Cairo-Bold',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: onSurface.withValues(alpha: 0.55),
           ),
-          child: TextFormField(
-            style: TextStyle(
-              fontFamily: 'Cairo-Bold',
-              fontSize: 13,
-              color: enabled
-                  ? Theme.of(context).colorScheme.onSurface
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            ),
-            onTap: onTap,
-            readOnly: readOnly ?? false,
-            keyboardType: keyboardType,
-            obscureText: obscureText,
-            controller: controller,
-            validator: validator,
-            cursorColor: AppColors.kPrimaryColor,
-            enabled: enabled,
-            onChanged: onChanged,
-            onEditingComplete: onEditingComplete,
-            onFieldSubmitted: onFieldSubmitted,
-            focusNode: focusNode,
-            textInputAction: textInputAction,
-            autofocus: autofocus,
-            maxLines: maxLines,
-            minLines: minLines,
-            maxLength: maxLength,
-            decoration: InputDecoration(
-              errorMaxLines: 3,
-              suffixIcon: suffixIcon,
-              prefixIcon: icon != null
-                  ? Icon(
-                      icon,
-                      color: prefixIconColor ?? AppColors.kPrimaryColor,
-                    )
-                  : null,
-              fillColor: fillColor ?? Colors.transparent,
-              filled: true,
-              labelText: label,
-              labelStyle: TextStyle(
+          floatingLabelStyle: const TextStyle(
+            fontFamily: 'Cairo-Bold',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.kPrimaryColor,
+          ),
+          // Hint
+          hintText: hintText,
+          hintStyle: hintStyle ??
+              TextStyle(
                 fontFamily: 'Cairo-Bold',
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: onSurface.withValues(alpha: 0.30),
               ),
-              hintText: hintText,
-              hintStyle:
-                  hintStyle ??
-                  const TextStyle(fontFamily: 'Cairo-Bold', fontSize: 13),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: BorderSide(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.error, // لون البوردر الافتراضي
-                  width: 1.0,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: const BorderSide(
-                  color: AppColors.kPrimaryColor, // لون عند التركيز
-                  width: 1.5,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: const BorderSide(
-                  color: Colors.red, // لون الخطأ
-                  width: 1.0,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: const BorderSide(
-                  color: Colors.red, // لون الخطأ مع التركيز
-                  width: 1.5,
-                ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: BorderSide(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary, // لون الحقل المعطّل
-                  width: 1.0,
-                ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-              floatingLabelBehavior: FloatingLabelBehavior.auto,
-              counterText: counterText,
+          // Error
+          errorStyle: const TextStyle(
+            fontFamily: 'Cairo-Bold',
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: AppColors.kRedColor,
+          ),
+          // Borders
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            borderSide: BorderSide(color: enabledBorderColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            borderSide: BorderSide(color: enabledBorderColor, width: 1.0),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            borderSide: const BorderSide(
+              color: AppColors.kPrimaryColor,
+              width: 1.5,
             ),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            borderSide: const BorderSide(
+              color: AppColors.kRedColor,
+              width: 1.0,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            borderSide: const BorderSide(
+              color: AppColors.kRedColor,
+              width: 1.5,
+            ),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            borderSide: BorderSide(
+              color: disabledBorderColor,
+              width: 1.0,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 15,
+          ),
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+          counterText: counterText,
         ),
       ),
     );

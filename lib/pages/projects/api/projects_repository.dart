@@ -60,7 +60,7 @@ class ProjectsRepository extends BaseApi {
     return execute(request: () async {
       final res = await _dio.patch(
         ApiConstants.projectStatus(id),
-        data: {'status': status.api},
+        data: {'status': status.index},
       );
       return ProjectModel.fromJson(res.data as Map<String, dynamic>);
     });

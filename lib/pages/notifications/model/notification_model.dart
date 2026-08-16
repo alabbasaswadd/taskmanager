@@ -31,7 +31,7 @@ class NotificationModel {
   factory NotificationModel.fromJson(Map<String, dynamic> json) => NotificationModel(
         id: (json['id'] ?? '').toString(),
         workspaceId: (json['workspaceId'] ?? '').toString(),
-        type: notificationTypeFromApi(json['type'] as String?),
+        type: notificationTypeFromApi(json['type']),
         title: (json['title'] ?? '').toString(),
         message: (json['message'] ?? '').toString(),
         isRead: json['isRead'] as bool? ?? false,
